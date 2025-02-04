@@ -1,9 +1,10 @@
 COMPILERS="gcc tapir ref stapir sref serial"
-WORKERS="1 18"
-# NUMTRIALS=3
+WORKERS="1 2 4 6 8 10 12 24 48"
+WORKERS="1 24"
 
-TAPIR_CC=clang
-TAPIR_CXX=clang++
+
+TAPIR_BASE=/home/daniel/iaf
+# NUMTRIALS=3
 
 if [ -z $REF_BASE ]; then
     if [ -z $TAPIR_BASE ]; then
@@ -35,8 +36,14 @@ if [ ! -z $TAPIR_ROOT ]; then
 else
     TAPIR_LIB=/usr/lib/clang/`$TAPIR_CC --version | perl -pe '($_)=/([0-9]+([.][0-9]+)+)/'`/lib/linux
 fi
+
+TAPIR_ROOT=$TAPIR_BASE/build
+TAPIR_PATH=$TAPIR_ROOT/bin
+TAPIR_CC=$TAPIR_PATH/clang
+TAPIR_CXX=$TAPIR_PATH/clang++
+TAPIR_LIB=$TAPIR_ROOT/lib/clang/16/lib/x86_64-unknown-linux-gnu/
+
 echo $TAPIR_LIB
-echo $REF_PATH
 
 #TAPIR_CILK_FLAG=-fcilkplus
 TAPIR_CILK_FLAG=-fopencilk
@@ -53,7 +60,7 @@ CILKSAN_CFLAGS="-g -fsanitize=cilk"
 CILKSAN_LDFLAGS="-fsanitize=cilk"
 
 CILKSCALE_CFLAGS="-flto -fcsi"
-CILKSCALE_LDFLAGS="-flto -fuse-ld=gold -L$TAPIR_LIB"
+CILKSCALE_LDFLAGS="-flto -fuse-ld=lld -L$TAPIR_LIB"
 CILKSCALE_LDLIBS="-lclang_rt.cilkscale-x86_64"
 
 JEMALLOC_LDLIBS="-L`jemalloc-config --libdir` -Wl,-rpath,`jemalloc-config --libdir` -ljemalloc `jemalloc-config --libs`"

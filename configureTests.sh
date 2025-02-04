@@ -3,7 +3,7 @@ WORKERS="1 2 4 6 8 10 12 24 48"
 WORKERS="1 24"
 
 
-TAPIR_BASE=/home/daniel/iaf
+TAPIR_BASE=`realpath ..`
 # NUMTRIALS=3
 
 if [ -z $REF_BASE ]; then

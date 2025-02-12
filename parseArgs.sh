@@ -1,6 +1,5 @@
-DEFAULT_COMPILERS_TO_TEST="tapir"
-DEFAULT_WORKERS_TO_TEST="1 $(lscpu -p | egrep -v '^#' | sort -u -t, -k 2,4 | wc -l)"
-#WORKERS_TO_TEST="18"
+#DEFAULT_COMPILERS_TO_TEST="tapir"
+#DEFAULT_WORKERS_TO_TEST="1 $(lscpu -p | egrep -v '^#' | sort -u -t, -k 2,4 | wc -l)"
 DEFAULT_NUMTRIALS=3
 
 DEFAULT=1
@@ -18,13 +17,8 @@ CHECK_CORRECTNESS=0
 CHECK_CILKSAN=0
 CHECK_CILKSCALE=0
 NUMTRIALS=$DEFAULT_NUMTRIALS
-if [ -z "$WORKERS" ]; then 
-  WORKERS_TO_TEST=$DEFAULT_WORKERS_TO_TEST
-else 
-  WORKERS_TO_TEST=$WORKERS
-fi
-
 COMPILERS_TO_TEST=""
+WORKERS_TO_TEST=$DEFAULT_WORKERS_TO_TEST
 
 function usage {
     >&2 echo -e "Usage:"
@@ -62,6 +56,18 @@ do
 	-t|--tapir)
 	    DEFAULT=0
 	    COMPILERS_TO_TEST="$COMPILERS_TO_TEST tapir"
+	    # TAP=0
+	    shift
+	    ;;
+	-csan|--csan)
+	    DEFAULT=0
+	    COMPILERS_TO_TEST="$COMPILERS_TO_TEST cilksan"
+	    # TAP=0
+	    shift
+	    ;;
+	-iaf|--cilkiaf)
+	    DEFAULT=0
+	    COMPILERS_TO_TEST="$COMPILERS_TO_TEST cilkiaf"
 	    # TAP=0
 	    shift
 	    ;;

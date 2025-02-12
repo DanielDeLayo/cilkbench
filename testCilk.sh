@@ -152,6 +152,7 @@ set -e
 
 for Test in $ALLTESTS; do
     pushd $TESTDIR
+    echo $COMPILERS_TO_TEST
     for Compiler in $COMPILERS_TO_TEST; do
 	WORKERS=$WORKERS_TO_TEST
 	if [[ ($Compiler == "stapir") ||

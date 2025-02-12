@@ -34,13 +34,13 @@ static int getWorkers() {
   return __cilkrts_get_nworkers();
 }
 static void setWorkers(int n) {
-  __cilkrts_end_cilk();
+/*  __cilkrts_end_cilk();
   //__cilkrts_init();
   std::stringstream ss; ss << n;
   if (0 != __cilkrts_set_param("nworkers", ss.str().c_str())) {
     std::cerr << "failed to set worker count!" << std::endl;
     std::abort();
-  }
+  }*/
 }
 
 // openmp

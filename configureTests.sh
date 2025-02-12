@@ -1,6 +1,6 @@
-COMPILERS="gcc tapir ref stapir sref serial"
-WORKERS="1 2 4 6 8 10 12 24 48"
-WORKERS="1 24"
+DEFAULT_COMPILERS_TO_TEST="tapir"
+DEFAULT_WORKERS_TO_TEST="1 2 4 6 8 10 12 24 48"
+DEFAULT_WORKERS_TO_TEST="1 24"
 
 
 TAPIR_BASE=`realpath ..`
@@ -41,7 +41,7 @@ TAPIR_ROOT=$TAPIR_BASE/build
 TAPIR_PATH=$TAPIR_ROOT/bin
 TAPIR_CC=$TAPIR_PATH/clang
 TAPIR_CXX=$TAPIR_PATH/clang++
-TAPIR_LIB=$TAPIR_ROOT/lib/clang/16/lib/x86_64-unknown-linux-gnu/
+TAPIR_LIB=$TAPIR_ROOT/lib/clang/19/lib/x86_64-unknown-linux-gnu/
 
 echo $TAPIR_LIB
 
@@ -68,6 +68,9 @@ JEMALLOC_LDLIBS="-L`jemalloc-config --libdir` -Wl,-rpath,`jemalloc-config --libd
 C_COMPILER() {
     case $1 in
 	"tapir") echo "$TAPIR_CC $TAPIR_CILK_FLAG";;
+	"cilksan") echo "$TAPIR_CC $TAPIR_CILK_FLAG -fsanitize=cilk";;
+	"cilkiaf") echo "$TAPIR_CC $TAPIR_CILK_FLAG -fcilktool=cilkiaf";;
+	"cilkprace") echo "$TAPIR_CC $TAPIR_CILK_FLAG -fcilktool=cilkprace";;
 	"ref") echo "$REF_PATH/clang $REF_CILK_FLAG";;
 	"stapir") echo "$TAPIR_CC $TAPIR_CILK_FLAG $SERIAL_CFLAGS";;
 	"sref") echo "$REF_PATH/clang $REF_CILK_FLAG $SERIAL_CFLAGS";;
@@ -81,6 +84,9 @@ C_COMPILER() {
 CXX_COMPILER() {
     case $1 in
 	"tapir") echo "$TAPIR_CXX $TAPIR_CILK_FLAG";;
+	"cilksan") echo "$TAPIR_CXX $TAPIR_CILK_FLAG -fsanitize=cilk";;
+	"cilkiaf") echo "$TAPIR_CXX $TAPIR_CILK_FLAG -fcilktool=cilkiaf";;
+	"cilkprace") echo "$TAPIR_CXX $TAPIR_CILK_FLAG -fcilktool=cilkprace";;
 	"ref") echo "$REF_PATH/clang++ $REF_CILK_FLAG";;
 	"stapir") echo "$TAPIR_CXX $TAPIR_CILK_FLAG $SERIAL_CFLAGS";;
 	"sref") echo "$REF_PATH/clang++ $REF_CILK_FLAG $SERIAL_CFLAGS";;
@@ -94,6 +100,9 @@ CXX_COMPILER() {
 CILKFLAG() {
     case $1 in
 	"tapir") echo "$TAPIR_CILK_FLAG";;
+	"cilksan") echo "$TAPIR_CILK_FLAG -fsanitize=cilk";;
+	"cilkiaf") echo "$TAPIR_CILK_FLAG -fcilktool=cilkiaf";;
+	"cilkprace") echo "$TAPIR_CILK_FLAG -fcilktool=cilkprace";;
 	"ref") echo "$REF_CILK_FLAG";;
 	"stapir") echo "$TAPIR_CILK_FLAG $SERIAL_CFLAGS";;
 	"sref") echo "$REF_CILK_FLAG $SERIAL_CFLAGS";;

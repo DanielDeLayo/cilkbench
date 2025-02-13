@@ -43,6 +43,19 @@ TAPIR_CC=$TAPIR_PATH/clang
 TAPIR_CXX=$TAPIR_PATH/clang++
 TAPIR_LIB=$TAPIR_ROOT/lib/clang/19/lib/x86_64-unknown-linux-gnu/
 
+BITCODE_IAF=$(find $TAPIR_LIB -name "*cilkiaf.bc")
+BITCODE_PRACE=$(find $TAPIR_LIB -name "*cilkprace.bc")
+BITCODE_CSAN=$(find $TAPIR_LIB -name "*cilksan.bc")
+if [ ! -z "${BITCODE_IAF}" ]; then
+  BITCODE_IAF="-mllvm -csi-tool-bitcode=$BITCODE_IAF"
+fi
+if [ ! -z "${BITCODE_PRACE}" ]; then
+  BITCODE_PRACE="-mllvm -csi-tool-bitcode=$BITCODE_PRACE"
+fi
+if [ ! -z "${BITCODE_CSAN}" ]; then
+  BITCODE_CSAN="-mllvm -csi-tool-bitcode=$BITCODE_CSAN"
+fi
+
 echo $TAPIR_LIB
 
 #TAPIR_CILK_FLAG=-fcilkplus
@@ -100,9 +113,9 @@ CXX_COMPILER() {
 CILKFLAG() {
     case $1 in
 	"tapir") echo "$TAPIR_CILK_FLAG";;
-	"cilksan") echo "$TAPIR_CILK_FLAG -fsanitize=cilk";;
-	"cilkiaf") echo "$TAPIR_CILK_FLAG -fcilktool=cilkiaf";;
-	"cilkprace") echo "$TAPIR_CILK_FLAG -fcilktool=cilkprace";;
+	"cilksan") echo "$TAPIR_CILK_FLAG -fsanitize=cilk $BITCODE_CSAN";;
+	"cilkiaf") echo "$TAPIR_CILK_FLAG -fcilktool=cilkiaf $BITCODE_IAF";;
+	"cilkprace") echo "$TAPIR_CILK_FLAG -fcilktool=cilkprace $BITCODE_PRACE";;
 	"ref") echo "$REF_CILK_FLAG";;
 	"stapir") echo "$TAPIR_CILK_FLAG $SERIAL_CFLAGS";;
 	"sref") echo "$REF_CILK_FLAG $SERIAL_CFLAGS";;

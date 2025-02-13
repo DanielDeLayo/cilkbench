@@ -71,6 +71,12 @@ do
 	    # TAP=0
 	    shift
 	    ;;
+	-prace|--cilkprace)
+	    DEFAULT=0
+	    COMPILERS_TO_TEST="$COMPILERS_TO_TEST cilkprace"
+	    # TAP=0
+	    shift
+	    ;;
 	-g|--gcc)
 	    DEFAULT=0
 	    COMPILERS_TO_TEST="$COMPILERS_TO_TEST gcc"

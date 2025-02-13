@@ -1,6 +1,6 @@
 DEFAULT_COMPILERS_TO_TEST="tapir"
 DEFAULT_WORKERS_TO_TEST="1 2 4 6 8 10 12 24 48"
-DEFAULT_WORKERS_TO_TEST="1 24"
+DEFAULT_WORKERS_TO_TEST="24 1"
 
 
 TAPIR_BASE=`realpath ..`
@@ -43,9 +43,9 @@ TAPIR_CC=$TAPIR_PATH/clang
 TAPIR_CXX=$TAPIR_PATH/clang++
 TAPIR_LIB=$TAPIR_ROOT/lib/clang/19/lib/x86_64-unknown-linux-gnu/
 
-BITCODE_IAF=$(find $TAPIR_LIB -name "*cilkiaf.bc")
-BITCODE_PRACE=$(find $TAPIR_LIB -name "*cilkprace.bc")
-BITCODE_CSAN=$(find $TAPIR_LIB -name "*cilksan.bc")
+BITCODE_IAF=$(find $TAPIR_ROOT -name "*cilkiaf.bc")
+BITCODE_PRACE=$(find $TAPIR_ROOT -name "*cilkprace.bc")
+BITCODE_CSAN=$(find $TAPIR_ROOT -name "*cilksan.bc")
 if [ ! -z "${BITCODE_IAF}" ]; then
   BITCODE_IAF="-mllvm -csi-tool-bitcode=$BITCODE_IAF"
 fi

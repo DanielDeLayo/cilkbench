@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
-bash regressionTest.sh -t -csan -prace
+bash regressionTest.sh -t -prace -csan 
 

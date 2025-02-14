@@ -2,5 +2,5 @@
 
 export CILKIAF_CACHE=10000
 
-bash regressionTest.sh -t -iaf -cilk -w=48,24,1
+bash regressionTest.sh -t -iaf -w=48,24,1
 

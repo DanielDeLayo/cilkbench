@@ -8,7 +8,7 @@ workers = ["1", "24", "48"]
 runtime_pattern = re.compile("^\d+\.\d+$")
 
 
- Returns a list of the running time for the given compiler, worker, program tuple
+#Returns a list of the running time for the given compiler, worker, program tuple
 def parse_file(subdir, c, w, p):
   target = subdir + "/Run-" + "-".join([c,w,p]) + ".txt"
   results = []

@@ -1,5 +1,6 @@
 import pandas as pd
 import re
+import matplotlib.pyplot as plt
 
 ntrials=2
 compilers = ["cilkiaf", "tapir"]
@@ -7,7 +8,7 @@ workers = ["1", "24", "48"]
 runtime_pattern = re.compile("^\d+\.\d+$")
 
 
-# Returns a list of the running time for the given compiler, worker, program tuple
+ Returns a list of the running time for the given compiler, worker, program tuple
 def parse_file(subdir, c, w, p):
   target = subdir + "/Run-" + "-".join([c,w,p]) + ".txt"
   results = []
@@ -16,7 +17,7 @@ def parse_file(subdir, c, w, p):
     for line in f:
       match = runtime_pattern.findall(line)
       if match:
-        results.append(match[0])
+        results.append(float(match[0]))
   
   #print(target)
   #print(results)
@@ -39,9 +40,24 @@ def cilk5_gather():
         data.append(parse_file("cilk5", c, p, w))
 
   df = pd.DataFrame(data, index)
+  df.to_csv("cilk5.csv")
 
-  print(df)
+  return df
 
 
-cilk5_gather()
+def plot(df):
+  df2 = df.min(axis=1).unstack(0).unstack(1)
+  df2.plot.bar(title="Tapir and Cilkiaf running times", xlabel="Program", ylabel="Runtime (s)") 
+  plt.savefig("all.pdf")
+  df2["tapir"].plot.bar(title="Tapir running times", xlabel="Program", ylabel="Runtime (s)")
+  plt.savefig("tapir.pdf")
+  df2["cilkiaf"].plot.bar(title="Cilkiaf running times", xlabel="Program", ylabel="Runtime (s)")
+  plt.savefig("cilkiaf.pdf")
+  plt.show()
+
+
+df = cilk5_gather()
+print(df)
+
+plot(df)
 

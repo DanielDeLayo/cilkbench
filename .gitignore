@@ -6,6 +6,9 @@
 *.o
 *.out
 *.pyc
+*.pdf
+cilk5.csv
+
 
 tmp/
 results/

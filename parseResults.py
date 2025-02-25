@@ -47,11 +47,11 @@ def cilk5_gather():
 
 def plot(df):
   df2 = df.min(axis=1).unstack(0).unstack(1)
-  df2.plot.bar(title="Tapir and Cilkiaf running times", xlabel="Program", ylabel="Runtime (s)") 
+  df2.plot.bar(title="Tapir and Cilkiaf running times", xlabel="Program", ylabel="Runtime (s)", logy=True) 
   plt.savefig("all.pdf")
-  df2["tapir"].plot.bar(title="Tapir running times", xlabel="Program", ylabel="Runtime (s)")
+  df2["tapir"].plot.bar(title="Tapir running times", xlabel="Program", ylabel="Runtime (s)", logy=True)
   plt.savefig("tapir.pdf")
-  df2["cilkiaf"].plot.bar(title="Cilkiaf running times", xlabel="Program", ylabel="Runtime (s)")
+  df2["cilkiaf"].plot.bar(title="Cilkiaf running times", xlabel="Program", ylabel="Runtime (s)", logy=True)
   plt.savefig("cilkiaf.pdf")
   plt.show()
 

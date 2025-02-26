@@ -3,7 +3,9 @@ import re
 import matplotlib.pyplot as plt
 
 ntrials=2
-compilers = ["cilkiaf", "tapir"]
+
+#compilers = ["cilkiaf", "tapir"]
+compilers = ["cilkprace", "cilksan", "tapir"]
 workers = ["1", "24", "48"]
 runtime_pattern = re.compile("^\d+\.\d+$")
 
@@ -45,7 +47,19 @@ def cilk5_gather():
   return df
 
 
-def plot(df):
+def plot_prace(df):
+  df2 = df.min(axis=1).unstack(0).unstack(1)
+  df2.plot.bar(title="Tapir, Cilkprace, and Cilksan running times", xlabel="Program", ylabel="Runtime (s)", logy=True) 
+  plt.savefig("all.pdf")
+  df2["tapir"].plot.bar(title="Tapir running times", xlabel="Program", ylabel="Runtime (s)", logy=True)
+  plt.savefig("tapir.pdf")
+  df2["cilkprace"].plot.bar(title="Cilkprace running times", xlabel="Program", ylabel="Runtime (s)", logy=True)
+  plt.savefig("cilkprace.pdf")
+  df2["cilksan"].plot.bar(title="Cilksan running times", xlabel="Program", ylabel="Runtime (s)", logy=True)
+  plt.savefig("cilksan.pdf")
+  plt.show()
+
+def plot_iaf(df):
   df2 = df.min(axis=1).unstack(0).unstack(1)
   df2.plot.bar(title="Tapir and Cilkiaf running times", xlabel="Program", ylabel="Runtime (s)", logy=True) 
   plt.savefig("all.pdf")
@@ -55,9 +69,8 @@ def plot(df):
   plt.savefig("cilkiaf.pdf")
   plt.show()
 
-
 df = cilk5_gather()
 print(df)
 
-plot(df)
+plot_prace(df)
 

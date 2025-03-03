@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 ntrials=2
 
 #compilers = ["cilkiaf", "tapir"]
-compilers = ["cilkprace", "cilksan", "tapir"]
+compilers = ["cilkprace", "cilksanprace", "cilksan", "tapir"]
 workers = ["1", "24", "48"]
 runtime_pattern = re.compile("^\d+\.\d+$")
 
@@ -15,11 +15,14 @@ def parse_file(subdir, c, w, p):
   target = subdir + "/Run-" + "-".join([c,w,p]) + ".txt"
   results = []
   
-  with open(target, "r") as f:
-    for line in f:
-      match = runtime_pattern.findall(line)
-      if match:
-        results.append(float(match[0]))
+  try:
+    with open(target, "r") as f:
+      for line in f:
+        match = runtime_pattern.findall(line)
+        if match:
+          results.append(float(match[0]))
+  except:
+    return [0] * ntrials;
   
   #print(target)
   #print(results)
@@ -49,12 +52,14 @@ def cilk5_gather():
 
 def plot_prace(df):
   df2 = df.min(axis=1).unstack(0).unstack(1)
-  df2.plot.bar(title="Tapir, Cilkprace, and Cilksan running times", xlabel="Program", ylabel="Runtime (s)", logy=True) 
+  df2.plot.bar(title="Tapir, Cilkprace, Cilksanprace, and Cilksan running times", xlabel="Program", ylabel="Runtime (s)", logy=True) 
   plt.savefig("all.pdf")
   df2["tapir"].plot.bar(title="Tapir running times", xlabel="Program", ylabel="Runtime (s)", logy=True)
   plt.savefig("tapir.pdf")
   df2["cilkprace"].plot.bar(title="Cilkprace running times", xlabel="Program", ylabel="Runtime (s)", logy=True)
   plt.savefig("cilkprace.pdf")
+  df2["cilksanprace"].plot.bar(title="Cilksanprace running times", xlabel="Program", ylabel="Runtime (s)", logy=True)
+  plt.savefig("cilksanprace.pdf")
   df2["cilksan"].plot.bar(title="Cilksan running times", xlabel="Program", ylabel="Runtime (s)", logy=True)
   plt.savefig("cilksan.pdf")
   plt.show()

@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 ntrials=2
 
 #compilers = ["cilkiaf", "tapir"]
-compilers = ["cilkprace", "cilksanprace", "cilksan", "tapir"]
+compilers = ["cilksanprace", "cilksan", "tapir"]
 workers = ["1", "24", "48"]
 runtime_pattern = re.compile("^\d+\.\d+$")
 
@@ -20,7 +20,7 @@ def parse_file(subdir, c, w, p):
       for line in f:
         match = runtime_pattern.findall(line)
         if match:
-          results.append(float(match[0]))
+          results.append(float(match[0]))   
   except:
     return [0] * ntrials;
   
@@ -50,14 +50,31 @@ def cilk5_gather():
   return df
 
 
+def configure_plot():
+  plt.xlabel("Program")
+  plt.ylabel("Runtime (s)")
+  plt.yscale("log")
+
+  # Stop the legend from covering up data
+  plt.legend(bbox_to_anchor=(1.05, .5), loc="center left")
+  # Workaround for overlapping x labels
+  plt.xticks(rotation=90)  
+  # Workaround for cut off x labels
+  plt.tight_layout()
+
 def plot_prace(df):
+  # All plot is harder to make
   df2 = df.min(axis=1).unstack(0).unstack(1)
-  df2.plot.bar(title="Tapir, Cilkprace, Cilksanprace, and Cilksan running times", xlabel="Program", ylabel="Runtime (s)", logy=True) 
+  print(df2)
+  df2.plot(title="Tapir, Cilksanprace, and Cilksan running times", marker="x", linestyle="dotted", xticks=range(len(df2)))
+  
+  configure_plot()
   plt.savefig("all.pdf")
+  plt.show()
+  return
+  # "Easy" barcharts
   df2["tapir"].plot.bar(title="Tapir running times", xlabel="Program", ylabel="Runtime (s)", logy=True)
   plt.savefig("tapir.pdf")
-  df2["cilkprace"].plot.bar(title="Cilkprace running times", xlabel="Program", ylabel="Runtime (s)", logy=True)
-  plt.savefig("cilkprace.pdf")
   df2["cilksanprace"].plot.bar(title="Cilksanprace running times", xlabel="Program", ylabel="Runtime (s)", logy=True)
   plt.savefig("cilksanprace.pdf")
   df2["cilksan"].plot.bar(title="Cilksan running times", xlabel="Program", ylabel="Runtime (s)", logy=True)
@@ -66,13 +83,19 @@ def plot_prace(df):
 
 def plot_iaf(df):
   df2 = df.min(axis=1).unstack(0).unstack(1)
-  df2.plot.bar(title="Tapir and Cilkiaf running times", xlabel="Program", ylabel="Runtime (s)", logy=True) 
+  print(df2)
+  df2.plot(title="Tapir and Cilkiaf running times", marker="x", linestyle="dotted", xticks=range(len(df2)))
+  configure_plot()
   plt.savefig("all.pdf")
+  plt.show()
+  return
+
+ # df2 = df.min(axis=1).unstack(0).unstack(1)
+  #df2.plot.bar(title="Tapir and Cilkiaf running times", xlabel="Program", ylabel="Runtime (s)", logy=True) 
   df2["tapir"].plot.bar(title="Tapir running times", xlabel="Program", ylabel="Runtime (s)", logy=True)
   plt.savefig("tapir.pdf")
   df2["cilkiaf"].plot.bar(title="Cilkiaf running times", xlabel="Program", ylabel="Runtime (s)", logy=True)
   plt.savefig("cilkiaf.pdf")
-  plt.show()
 
 df = cilk5_gather()
 print(df)

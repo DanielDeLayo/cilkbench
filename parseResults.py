@@ -66,7 +66,7 @@ def plot_prace(df):
   # All plot is harder to make
   df2 = df.min(axis=1).unstack(0).unstack(1)
   print(df2)
-  df2.plot(title="Tapir, Cilksanprace, and Cilksan running times", marker="x", linestyle="dotted", xticks=range(len(df2)))
+  df2.plot(title="Tapir, Cilksanprace, and Cilksan running times", marker="x", linestyle="none", xticks=range(len(df2)))
   
   configure_plot()
   plt.savefig("all.pdf")
@@ -84,7 +84,7 @@ def plot_prace(df):
 def plot_iaf(df):
   df2 = df.min(axis=1).unstack(0).unstack(1)
   print(df2)
-  df2.plot(title="Tapir and Cilkiaf running times", marker="x", linestyle="dotted", xticks=range(len(df2)))
+  df2.plot(title="Tapir and Cilkiaf running times", marker="x", linestyle="none", xticks=range(len(df2)))
   configure_plot()
   plt.savefig("all.pdf")
   plt.show()

@@ -84,6 +84,7 @@ C_COMPILER() {
 	"cilksan") echo "$TAPIR_CC $TAPIR_CILK_FLAG -fsanitize=cilk";;
 	"cilkiaf") echo "$TAPIR_CC $TAPIR_CILK_FLAG -fcilktool=cilkiaf";;
 	"cilkprace") echo "$TAPIR_CC $TAPIR_CILK_FLAG -fcilktool=cilkprace";;
+	"cilksanprace") echo "$TAPIR_CC $TAPIR_CILK_FLAG -fsanitize=cilkprace";;
 	"ref") echo "$REF_PATH/clang $REF_CILK_FLAG";;
 	"stapir") echo "$TAPIR_CC $TAPIR_CILK_FLAG $SERIAL_CFLAGS";;
 	"sref") echo "$REF_PATH/clang $REF_CILK_FLAG $SERIAL_CFLAGS";;
@@ -100,6 +101,7 @@ CXX_COMPILER() {
 	"cilksan") echo "$TAPIR_CXX $TAPIR_CILK_FLAG -fsanitize=cilk";;
 	"cilkiaf") echo "$TAPIR_CXX $TAPIR_CILK_FLAG -fcilktool=cilkiaf";;
 	"cilkprace") echo "$TAPIR_CXX $TAPIR_CILK_FLAG -fcilktool=cilkprace";;
+	"cilksanprace") echo "$TAPIR_CXX $TAPIR_CILK_FLAG -fsanitize=cilkprace";;
 	"ref") echo "$REF_PATH/clang++ $REF_CILK_FLAG";;
 	"stapir") echo "$TAPIR_CXX $TAPIR_CILK_FLAG $SERIAL_CFLAGS";;
 	"sref") echo "$REF_PATH/clang++ $REF_CILK_FLAG $SERIAL_CFLAGS";;
@@ -116,6 +118,7 @@ CILKFLAG() {
 	"cilksan") echo "$TAPIR_CILK_FLAG -fsanitize=cilk $BITCODE_CSAN";;
 	"cilkiaf") echo "$TAPIR_CILK_FLAG -fcilktool=cilkiaf $BITCODE_IAF";;
 	"cilkprace") echo "$TAPIR_CILK_FLAG -fcilktool=cilkprace $BITCODE_PRACE";;
+	"cilksanprace") echo "$TAPIR_CILK_FLAG -fsanitize=cilkprace $BITCODE_PRACE";;
 	"ref") echo "$REF_CILK_FLAG";;
 	"stapir") echo "$TAPIR_CILK_FLAG $SERIAL_CFLAGS";;
 	"sref") echo "$REF_CILK_FLAG $SERIAL_CFLAGS";;

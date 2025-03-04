@@ -44,6 +44,12 @@ def cilk5_gather():
 
   return df
 
+def read_csv(name):
+
+  df = pd.read_csv(name, index_col=[0,1,2])
+  
+  return df
+
 
 def plot(df):
   df2 = df.min(axis=1).unstack(0).unstack(1)

@@ -5,8 +5,19 @@ from random import random
 
 ntrials=2
 
-#compilers = ["cilkiaf", "tapir"]
-compilers = ["cilksanprace", "cilksan", "tapir"]
+# The compilers and prefixes variables determine what is plotted
+# Prefixes are used for regression plots
+
+# IAF
+compilers = ["cilkiaf", "tapir"]
+prefixes = ["simpleopt", "noopt", "locktest"]
+
+# Cilkprace
+#compilers = ["cilksanprace", "cilksan", "tapir"]
+#prefixes = ["baseline"]
+
+
+
 workers = ["1", "24", "48"]
 runtime_pattern = re.compile("^\d+\.\d+$")
 
@@ -23,7 +34,7 @@ def parse_file(subdir, c, w, p):
         if match:
           results.append(float(match[0]))   
   except:
-    return [100 * random()] * ntrials;
+    return [0] * ntrials;
 
   #print(target)
   #print(results)
@@ -32,7 +43,7 @@ def parse_file(subdir, c, w, p):
   
   
 
-def cilk5_gather():
+def cilk5_gather(prefix):
   programs = ["cholesky", "cilksort", "fft", "heat", "lu", "matmul", "nqueens", "qsort", "rectmul", "strassen"]
 
   # LAYOUT: Compilers, Programs, Workers
@@ -46,7 +57,7 @@ def cilk5_gather():
         data.append(parse_file("cilk5", c, p, w))
 
   df = pd.DataFrame(data, index)
-  df.to_csv("cilk5.csv")
+  df.to_csv(prefix + ".csv")
 
   return df
 
@@ -69,45 +80,67 @@ def configure_plot():
   # Workaround for cut off x labels
   plt.tight_layout()
 
-def plot_prace(df):
+def plot(df, prefix):
   # All plot is harder to make
   df2 = df.min(axis=1).unstack(0).unstack(1)
   print(df2)
 
   for c in compilers:
-    df2[c].plot(title=c + " running times", marker="x", linestyle="none", xticks=range(len(df2)))
+    df2[c].plot.bar(title=c + " running times (" + prefix + ")")
+    #df2[c].plot.bar(title=c + " running times", xticks=range(len(df2)))
     configure_plot()
 
-  plt.savefig("all.pdf")
-  plt.show()
-  return
-  # "Easy" barcharts
-  df2["tapir"].plot.bar(title="Tapir running times", xlabel="Program", ylabel="Runtime (s)", logy=True)
-  plt.savefig("tapir.pdf")
-  df2["cilksanprace"].plot.bar(title="Cilksanprace running times", xlabel="Program", ylabel="Runtime (s)", logy=True)
-  plt.savefig("cilksanprace.pdf")
-  df2["cilksan"].plot.bar(title="Cilksan running times", xlabel="Program", ylabel="Runtime (s)", logy=True)
-  plt.savefig("cilksan.pdf")
-  plt.show()
+    plt.savefig(prefix+"_"+c+".pdf")
 
-def plot_iaf(df):
-  df2 = df.min(axis=1).unstack(0).unstack(1)
+def plot_rel(data, baseline, prefix):
+  data2 = data.min(axis=1).unstack(0).unstack(1)
+  baseline2 = baseline.min(axis=1).unstack(0).unstack(1)
+  df2 = data2/baseline2
   print(df2)
-  df2.plot(title="Tapir and Cilkiaf running times", marker="x", linestyle="none", xticks=range(len(df2)))
-  configure_plot()
-  plt.savefig("all.pdf")
-  plt.show()
-  return
+  
+  for c in compilers:
+    df2[c].plot.bar(title=c + " slowdown (" + prefix + ")")
+    configure_plot()
+    plt.ylabel("Slowdown Factor")
 
- # df2 = df.min(axis=1).unstack(0).unstack(1)
-  #df2.plot.bar(title="Tapir and Cilkiaf running times", xlabel="Program", ylabel="Runtime (s)", logy=True) 
-  df2["tapir"].plot.bar(title="Tapir running times", xlabel="Program", ylabel="Runtime (s)", logy=True)
-  plt.savefig("tapir.pdf")
-  df2["cilkiaf"].plot.bar(title="Cilkiaf running times", xlabel="Program", ylabel="Runtime (s)", logy=True)
-  plt.savefig("cilkiaf.pdf")
+    plt.savefig(prefix+"_"+c+"_rel.pdf")
 
-df = cilk5_gather()
-print(df)
+def plot_rel_tapir(df, prefix):
+  baseline = df.min(axis=1).unstack(0).unstack(1)["tapir"]
+  
+  for c in compilers:
+    if c == "tapir":
+      continue
+    data = df.min(axis=1).unstack(0).unstack(1)[c]
+    df2 = data/baseline
+    print(df2)
+    df2.plot.bar(title=c + " slowdown (" + prefix + ")")
+    configure_plot()
+    plt.ylabel("Slowdown Factor vs Tapir")
+    plt.savefig(prefix+"_"+c+"_slowdown.pdf")
+  
 
-plot_prace(df)
+def plot_regression():
+  for p in prefixes:
+    pass #TODO: Plot the speedup over time. Maybe use Geo Mean? 
+
+    
+def plot_all():
+  for p in prefixes:
+    df = read_csv(p + ".csv")
+    plot(df, p)
+    plot_rel_tapir(df, p)
+
+
+def plot_new(prefix):
+  df = cilk5_gather(prefix)
+  print(df)
+  plot(df, prefix)
+  plot_rel_tapir(df, prefix)
+
+plot_new("test")
+plt.show()
+
+plot_all()
+plt.show()
 

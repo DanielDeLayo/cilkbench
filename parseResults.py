@@ -1,6 +1,7 @@
 import pandas as pd
 import re
 import matplotlib.pyplot as plt
+from random import random
 
 ntrials=2
 
@@ -22,8 +23,8 @@ def parse_file(subdir, c, w, p):
         if match:
           results.append(float(match[0]))   
   except:
-    return [0] * ntrials;
-  
+    return [100 * random()] * ntrials;
+
   #print(target)
   #print(results)
     
@@ -53,10 +54,10 @@ def cilk5_gather():
 def configure_plot():
   plt.xlabel("Program")
   plt.ylabel("Runtime (s)")
-  plt.yscale("log")
+  #plt.yscale("log")
 
   # Stop the legend from covering up data
-  plt.legend(bbox_to_anchor=(1.05, .5), loc="center left")
+  plt.legend(bbox_to_anchor=(1.02, .5), loc="center left")
   # Workaround for overlapping x labels
   plt.xticks(rotation=90)  
   # Workaround for cut off x labels
@@ -66,9 +67,11 @@ def plot_prace(df):
   # All plot is harder to make
   df2 = df.min(axis=1).unstack(0).unstack(1)
   print(df2)
-  df2.plot(title="Tapir, Cilksanprace, and Cilksan running times", marker="x", linestyle="none", xticks=range(len(df2)))
-  
-  configure_plot()
+
+  for c in compilers:
+    df2[c].plot(title=c + " running times", marker="x", linestyle="none", xticks=range(len(df2)))
+    configure_plot()
+
   plt.savefig("all.pdf")
   plt.show()
   return

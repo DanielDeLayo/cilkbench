@@ -10,7 +10,7 @@ ntrials=2
 
 # IAF
 compilers = ["cilkiaf", "tapir"]
-prefixes = ["simpleopt", "noopt", "locktest"]
+prefixes = ["simpleopt", "noopt", "locktest", "2_10_sampling"]
 
 # Cilkprace
 #compilers = ["cilksanprace", "cilksan", "tapir"]

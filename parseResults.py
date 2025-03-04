@@ -17,7 +17,6 @@ prefixes = ["simpleopt", "noopt", "locktest"]
 #prefixes = ["baseline"]
 
 
-
 workers = ["1", "24", "48"]
 runtime_pattern = re.compile("^\d+\.\d+$")
 
@@ -105,6 +104,22 @@ def plot_rel(data, baseline, prefix):
 
     plt.savefig(prefix+"_"+c+"_rel.pdf")
 
+def plot_lines(df, prefix):
+  # All plot is harder to make
+  df2 = df.min(axis=1)
+  for program, df3 in df2.groupby("Program"):
+    df4 = df3.unstack("Compiler").droplevel("Program")
+    print(df4)
+    print(df4.index)
+    df4.plot(title=program + " running times (" + prefix + ")",
+            marker='o')
+    configure_plot()
+
+    plt.xscale("log")
+    plt.yscale("log")
+
+    plt.savefig(prefix+"_line_"+program+".pdf")
+
 def plot_rel_tapir(df, prefix):
   baseline = df.min(axis=1).unstack(0).unstack(1)["tapir"]
   
@@ -130,6 +145,7 @@ def plot_all():
     df = read_csv(p + ".csv")
     plot(df, p)
     plot_rel_tapir(df, p)
+    plot_lines(df, p)
 
 
 def plot_new(prefix):
@@ -138,8 +154,8 @@ def plot_new(prefix):
   plot(df, prefix)
   plot_rel_tapir(df, prefix)
 
-plot_new("test")
-plt.show()
+#plot_new("test")
+#plt.show()
 
 plot_all()
 plt.show()

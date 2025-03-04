@@ -10,7 +10,7 @@ ntrials=2
 
 # IAF
 compilers = ["cilkiaf", "tapir"]
-prefixes = ["simpleopt", "noopt", "locktest"]
+prefixes = ["simpleopt", "noopt", "locktest", "2_10_sampling"]
 
 # Cilkprace
 #compilers = ["cilksanprace", "cilksan", "tapir"]
@@ -138,7 +138,7 @@ def plot_new(prefix):
   plot(df, prefix)
   plot_rel_tapir(df, prefix)
 
-plot_new("test")
+plot_new("2_10_sampling")
 plt.show()
 
 plot_all()

@@ -75,29 +75,59 @@ def parse_frames(file_handle, num):
   return (sampled, verified) 
 
 
+def plot_diff(sampled, verified):
+  #Force the same x axis
+  fig, ax = plt.subplots()
+  ax.set_xlabel("Size (Cachelines)")
+  ax.set_ylabel("Hit Error %")
+
+  cut = 32
+  
+  ax.set_title("Sampled vs True hitrate errors (Trimmed first " + str(cut) + ")")
+
+  for k, v in sampled.items(): 
+    ax.plot(sampled[k].index[cut:], 100 * (sampled[k]["Hits0"][cut:] - verified[k]["Hits0"][cut:])/ verified[k]["Hits0"][cut:], color="red", label="Hitrate", linestyle='--')
+
+  # Stop the legend from covering up data
+  ax.legend(bbox_to_anchor=(1.02, .5), loc="center left")
+  # Workaround for cut off artists
+  plt.tight_layout()
+  plt.savefig("verify_diff.pdf")
+  #plt.show()
+
 def plot(sampled, verified):
   #Force the same x axis
   fig, ax = plt.subplots()
-
-  #First plot: Hitrate
-  ax.plot(verified.index, verified["Hits0"], label="Hitrate Curve (True)")
   ax.set_xlabel("Size (Cachelines)")
+  ax.set_ylabel("Hits (Count)")
+  cut = 32
+  
+  ax.set_title("Sampled vs True hitrate curves (Trimmed first " + str(cut) + ")")
 
-  #Second plot: Measured Time
-  ax.plot(sampled.index, sampled["Hits0"], color="red", label="Hitrate Curve (Sampled)", linestyle='--')
-  ax.legend()
-  ax.set_title("Sampled vs True hitrate curve")
+  for k, v in sampled.items(): 
 
+    #First plot: Hitrate
+    ax.plot(verified[k].index[cut:], verified[k]["Hits0"][cut:], color="blue", label="Hitrate (Actual)")
+
+    #Second plot: Measured Time
+    ax.plot(sampled[k].index[cut:], sampled[k]["Hits0"][cut:], color="red", label="Hitrate (Sampled)", linestyle='--')
+
+  # Stop the legend from covering up data
+  ax.legend(bbox_to_anchor=(1.02, .5), loc="center left")
+  # Workaround for cut off artists
+  plt.tight_layout()
   plt.savefig("verify.pdf")
   #plt.show()
 
 
-sampled, verified = parse_file("cilk5", "cilkiaf", "cholesky", "48")
 
-plot(sampled[0], verified[0])
+sampled, verified = parse_file("cilk5", "cilkiaf", "fft", "24")
 
-sampled[0].to_csv("sampled")
-verified[0].to_csv("verified")
-df2 = verified[16] / (sampled[16])
-df2.to_csv("delme")
+plot(sampled, verified)
+plot_diff(sampled, verified)
+
+#sampled[0].to_csv("sampled")
+#verified[0].to_csv("verified")
+#df2 = verified[16] / (sampled[16])
+#df2.to_csv("delme")
 

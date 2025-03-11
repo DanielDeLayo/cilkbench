@@ -154,9 +154,9 @@ def plot_new(prefix):
   plot(df, prefix)
   plot_rel_tapir(df, prefix)
 
-#plot_new("test")
+plot_new("verify")
 #plt.show()
 
-plot_all()
-plt.show()
+#plot_all()
+#plt.show()
 

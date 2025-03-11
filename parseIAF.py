@@ -60,10 +60,16 @@ def parse_frames(file_handle, num):
   while line:
     if line.startswith("sampled"):
       w = int(line[7:])
-      sampled[w] = grab_df(file_handle)
+      if w in sampled:
+        sampled[w] = sampled[w].merge(grab_df(file_handle), left_index=True, right_index=True, suffixes=["0", "1"])
+      else:
+        sampled[w] = grab_df(file_handle)
     if line.startswith("verify"):
       w = int(line[6:])
-      verified[w] = grab_df(file_handle)
+      if w in verified:
+        verified[w] = verified[w].merge(grab_df(file_handle), left_index=True, right_index=True, suffixes=["0", "1"])
+      else:
+        verified[w] = grab_df(file_handle)
     line = file_handle.readline()
 
   return (sampled, verified) 
@@ -74,11 +80,11 @@ def plot(sampled, verified):
   fig, ax = plt.subplots()
 
   #First plot: Hitrate
-  ax.plot(verified.index, verified["Hits"], label="Hitrate Curve (True)")
+  ax.plot(verified.index, verified["Hits0"], label="Hitrate Curve (True)")
   ax.set_xlabel("Size (Cachelines)")
 
   #Second plot: Measured Time
-  ax.plot(sampled.index, sampled["Hits"], color="red", label="Hitrate Curve (Sampled)", linestyle='--')
+  ax.plot(sampled.index, sampled["Hits0"], color="red", label="Hitrate Curve (Sampled)", linestyle='--')
   ax.legend()
   ax.set_title("Sampled vs True hitrate curve")
 
@@ -86,13 +92,12 @@ def plot(sampled, verified):
   #plt.show()
 
 
-sampled, verified = parse_file("cilk5", "cilkiaf", "matmul", "1")
+sampled, verified = parse_file("cilk5", "cilkiaf", "cholesky", "48")
 
 plot(sampled[0], verified[0])
 
 sampled[0].to_csv("sampled")
 verified[0].to_csv("verified")
-df2 = verified[0] / (sampled[0]+1)
+df2 = verified[16] / (sampled[16])
 df2.to_csv("delme")
-
 

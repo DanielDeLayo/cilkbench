@@ -45,10 +45,15 @@ def cilk5_gather(prefix):
 def grab_df(file_handle):
   # Record start
   where = file_handle.tell()
-
-  total, max_cache = [int(x) for x in file_handle.readline().split(",")]
+  nextline = file_handle.readline()
+  if (nextline[0] == 's' or nextline[0] == 'v'):
+    file_handle.seek(where)
+    return None
+  total, max_cache = [int(x) for x in nextline.split(",")]
   df = pd.read_table(file_handle, sep=',', names=["Size", "Hits"], skiprows=1, nrows=max_cache, index_col=0) 
   df.attrs['total'] = total
+  df["Misses"] = total - df["Hits"]
+  df["MissRate"] = df["Misses"]/total
   # Return to start
   file_handle.seek(where)
   return df
@@ -59,34 +64,40 @@ def parse_frames(file_handle, num):
   line = file_handle.readline()
   while line:
     if line.startswith("sampled"):
-      w = int(line[7:])
-      if w in sampled:
-        sampled[w] = sampled[w].merge(grab_df(file_handle), left_index=True, right_index=True, suffixes=["0", "1"])
-      else:
-        sampled[w] = grab_df(file_handle)
+      w = int(line[7:].strip().split(" ")[0])
+      part = int(line[7:].strip().split(" ")[1])
+      df = grab_df(file_handle)
+      if df is not None:
+        if w in sampled:
+          sampled[w] = sampled[w].merge(df, left_index=True, right_index=True, suffixes=[None, part])
+        else:
+          sampled[w] = df
     if line.startswith("verify"):
       w = int(line[6:])
-      if w in verified:
-        verified[w] = verified[w].merge(grab_df(file_handle), left_index=True, right_index=True, suffixes=["0", "1"])
-      else:
-        verified[w] = grab_df(file_handle)
+      df = grab_df(file_handle)
+      if df is not None:
+        if w in verified:
+          verified[w] = verified[w].merge(df, left_index=True, right_index=True, suffixes=[None, "?"])
+        else:
+          verified[w] = df
     line = file_handle.readline()
 
   return (sampled, verified) 
 
 
-def plot_diff(sampled, verified):
+def plot_diff(sampled, verified, p):
   #Force the same x axis
   fig, ax = plt.subplots()
   ax.set_xlabel("Size (Cachelines)")
-  ax.set_ylabel("Hit Error %")
+  ax.set_ylabel("Missrate Error %")
 
   cut = 32
   
-  ax.set_title("Sampled vs True hitrate errors (Trimmed first " + str(cut) + ")")
+  ax.set_title(p+ ": Sampled vs Actual missrate errors (Trimmed first " + str(cut) + ")")
 
   for k, v in sampled.items(): 
-    ax.plot(sampled[k].index[cut:], 100 * (sampled[k]["Hits0"][cut:] - verified[k]["Hits0"][cut:])/ verified[k]["Hits0"][cut:], color="red", label="Hitrate", linestyle='--')
+    ax.plot(sampled[k].index[cut:], 100 * (sampled[k]["MissRate"][cut:] - verified[k]["MissRate"][cut:])/ verified[k]["MissRate"][cut:], color="red", label="Missrate 0 Error", linestyle='--')
+    ax.plot(sampled[k].index[cut:], 100 * (sampled[k]["MissRate1"][cut:] - verified[k]["MissRate"][cut:])/ verified[k]["MissRate"][cut:], color="red", label="Missrate 1 Error", linestyle=':')
 
   # Stop the legend from covering up data
   ax.legend(bbox_to_anchor=(1.02, .5), loc="center left")
@@ -95,22 +106,25 @@ def plot_diff(sampled, verified):
   plt.savefig("verify_diff.pdf")
   #plt.show()
 
-def plot(sampled, verified):
+def plot(sampled, verified, p):
   #Force the same x axis
   fig, ax = plt.subplots()
   ax.set_xlabel("Size (Cachelines)")
-  ax.set_ylabel("Hits (Count)")
+  ax.set_ylabel("Missrate")
   cut = 32
   
-  ax.set_title("Sampled vs True hitrate curves (Trimmed first " + str(cut) + ")")
+  ax.set_title(p + ": Sampled vs Actual missrate (Trimmed first " + str(cut) + ")")
 
   for k, v in sampled.items(): 
 
+    print(v)
+  
     #First plot: Hitrate
-    ax.plot(verified[k].index[cut:], verified[k]["Hits0"][cut:], color="blue", label="Hitrate (Actual)")
+    ax.plot(verified[k].index[cut:], verified[k]["MissRate"][cut:], color="blue", label="Missrate (Actual)")
 
     #Second plot: Measured Time
-    ax.plot(sampled[k].index[cut:], sampled[k]["Hits0"][cut:], color="red", label="Hitrate (Sampled)", linestyle='--')
+    ax.plot(sampled[k].index[cut:], sampled[k]["MissRate"][cut:], color="red", label="Missrate 0 (Sampled)", linestyle='--')
+    ax.plot(sampled[k].index[cut:], sampled[k]["MissRate1"][cut:], color="red", label="Missrate 1 (Sampled)", linestyle=':')
 
   # Stop the legend from covering up data
   ax.legend(bbox_to_anchor=(1.02, .5), loc="center left")
@@ -121,10 +135,14 @@ def plot(sampled, verified):
 
 
 
-sampled, verified = parse_file("cilk5", "cilkiaf", "fft", "24")
+programs = ["cholesky", "cilksort", "fft", "heat", "lu", "matmul", "nqueens", "qsort", "rectmul", "strassen"]
+programs = ["fft", "qsort", "rectmul", "strassen"]
+for p in programs:
+  sampled, verified = parse_file("cilk5", "cilkiaf", p, "1")
 
-plot(sampled, verified)
-plot_diff(sampled, verified)
+  plot(sampled, verified, p)
+  plot_diff(sampled, verified, p)
+plt.show()
 
 #sampled[0].to_csv("sampled")
 #verified[0].to_csv("verified")

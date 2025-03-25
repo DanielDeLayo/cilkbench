@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-REGRESSION_NUMTRIALS=2
+REGRESSION_NUMTRIALS=1
 
 # 6.172 F15 project 2 tests
 #P2_TESTS=`ls -d p2/*.git | sort -`

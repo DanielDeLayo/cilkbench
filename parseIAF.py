@@ -4,7 +4,8 @@ import matplotlib.pyplot as plt
 from random import random
 import os
 
-ntrials=2
+ntrials=1
+sampling=32
 
 # The compilers and prefixes variables determine what is plotted
 # Prefixes are used for regression plots
@@ -97,10 +98,12 @@ def plot_diff(sampled, verified, p):
 
   for k, v in sampled.items(): 
     ax.plot(sampled[k].index[cut:], 100 * (sampled[k]["MissRate"][cut:] - verified[k]["MissRate"][cut:])/ verified[k]["MissRate"][cut:], color="red", label="Missrate 0 Error", linestyle='--')
-    ax.plot(sampled[k].index[cut:], 100 * (sampled[k]["MissRate1"][cut:] - verified[k]["MissRate"][cut:])/ verified[k]["MissRate"][cut:], color="red", label="Missrate 1 Error", linestyle=':')
+    for i in range(1, sampling):  
+      ax.plot(sampled[k].index[cut:], 100 * (sampled[k]["MissRate" + str(i)][cut:] - verified[k]["MissRate"][cut:])/ verified[k]["MissRate"][cut:], color="red", label="Missrate " + str(i) + " Error", linestyle='--')
 
   # Stop the legend from covering up data
-  ax.legend(bbox_to_anchor=(1.02, .5), loc="center left")
+  if (sampling < 10):
+    ax.legend(bbox_to_anchor=(1.02, .5), loc="center left")
   # Workaround for cut off artists
   plt.tight_layout()
   plt.savefig("verify_diff.pdf")
@@ -124,10 +127,13 @@ def plot(sampled, verified, p):
 
     #Second plot: Measured Time
     ax.plot(sampled[k].index[cut:], sampled[k]["MissRate"][cut:], color="red", label="Missrate 0 (Sampled)", linestyle='--')
-    ax.plot(sampled[k].index[cut:], sampled[k]["MissRate1"][cut:], color="red", label="Missrate 1 (Sampled)", linestyle=':')
+    # Remaining plots: Extra missrates
+    for i in range(1, sampling):
+      ax.plot(sampled[k].index[cut:], sampled[k]["MissRate" + str(i)][cut:], color="red", label="Missrate " + str(i) + " (Sampled)", linestyle='--')
 
   # Stop the legend from covering up data
-  ax.legend(bbox_to_anchor=(1.02, .5), loc="center left")
+  if (sampling < 10):
+    ax.legend(bbox_to_anchor=(1.02, .5), loc="center left")
   # Workaround for cut off artists
   plt.tight_layout()
   plt.savefig("verify.pdf")
@@ -137,6 +143,8 @@ def plot(sampled, verified, p):
 
 programs = ["cholesky", "cilksort", "fft", "heat", "lu", "matmul", "nqueens", "qsort", "rectmul", "strassen"]
 programs = ["fft", "qsort", "rectmul", "strassen"]
+programs = ["cholesky", "cilksort", "heat", "lu", "matmul", "nqueens"]
+programs = ["cholesky", "cilksort", "heat"]
 for p in programs:
   sampled, verified = parse_file("cilk5", "cilkiaf", p, "1")
 

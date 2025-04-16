@@ -99,7 +99,7 @@ CXX_COMPILER() {
     case $1 in
 	"tapir") echo "$TAPIR_CXX $TAPIR_CILK_FLAG";;
 	"cilksan") echo "$TAPIR_CXX $TAPIR_CILK_FLAG -fsanitize=cilk";;
-	"cilkiaf") echo "$TAPIR_CXX $TAPIR_CILK_FLAG -fcilktool=cilkiaf";;
+	"cilkiaf") echo "$TAPIR_CXX $TAPIR_CILK_FLAG -fcilktool=cilkiaf -lcrypto";;
 	"cilkprace") echo "$TAPIR_CXX $TAPIR_CILK_FLAG -fcilktool=cilkprace";;
 	"cilksanprace") echo "$TAPIR_CXX $TAPIR_CILK_FLAG -fsanitize=cilkprace";;
 	"ref") echo "$REF_PATH/clang++ $REF_CILK_FLAG";;
@@ -116,7 +116,7 @@ CILKFLAG() {
     case $1 in
 	"tapir") echo "$TAPIR_CILK_FLAG";;
 	"cilksan") echo "$TAPIR_CILK_FLAG -fsanitize=cilk $BITCODE_CSAN";;
-	"cilkiaf") echo "$TAPIR_CILK_FLAG -fcilktool=cilkiaf $BITCODE_IAF";;
+	"cilkiaf") echo "$TAPIR_CILK_FLAG -fcilktool=cilkiaf $BITCODE_IAF -lcrypto";;
 	"cilkprace") echo "$TAPIR_CILK_FLAG -fcilktool=cilkprace $BITCODE_PRACE";;
 	"cilksanprace") echo "$TAPIR_CILK_FLAG -fsanitize=cilkprace $BITCODE_PRACE";;
 	"ref") echo "$REF_CILK_FLAG";;

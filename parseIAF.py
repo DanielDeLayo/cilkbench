@@ -5,15 +5,13 @@ from random import random
 import os
 
 ntrials=1
-sampling=32
+sampling=1024
+one_sample = True
 
-# The compilers and prefixes variables determine what is plotted
-# Prefixes are used for regression plots
+cut = 0
+cut = 100
 
-# IAF
-compilers = ["cilkiaf"]
-
-workers = ["1", "24", "48"]
+workers = ["1", "4", "16"]
 
 #Returns a list of the running time for the given compiler, worker, program tuple
 def parse_file(subdir, c, w, p):
@@ -50,11 +48,11 @@ def grab_df(file_handle):
   if (nextline[0] == 's' or nextline[0] == 'v'):
     file_handle.seek(where)
     return None
-  total, max_cache = [int(x) for x in nextline.split(",")]
+  total, max_cache, total_unsampled = [int(x) for x in nextline.split(",")]
   df = pd.read_table(file_handle, sep=',', names=["Size", "Hits"], skiprows=1, nrows=max_cache, index_col=0) 
   df.attrs['total'] = total
   df["Misses"] = total - df["Hits"]
-  df["MissRate"] = df["Misses"]/total
+  df["MissRate"] = df["Misses"]/total_unsampled
   # Return to start
   file_handle.seek(where)
   return df
@@ -62,6 +60,10 @@ def grab_df(file_handle):
 def parse_frames(file_handle, num):
   sampled = {}
   verified = {}
+
+  sampled_total = 0
+  real_total = 0
+  
   line = file_handle.readline()
   while line:
     if line.startswith("sampled"):
@@ -69,6 +71,7 @@ def parse_frames(file_handle, num):
       part = int(line[7:].strip().split(" ")[1])
       df = grab_df(file_handle)
       if df is not None:
+        sampled_total += df.attrs['total']
         if w in sampled:
           sampled[w] = sampled[w].merge(df, left_index=True, right_index=True, suffixes=[None, part])
         else:
@@ -77,11 +80,14 @@ def parse_frames(file_handle, num):
       w = int(line[6:])
       df = grab_df(file_handle)
       if df is not None:
+        real_total += df.attrs['total']
         if w in verified:
           verified[w] = verified[w].merge(df, left_index=True, right_index=True, suffixes=[None, "?"])
         else:
           verified[w] = df
     line = file_handle.readline()
+  print("real vs sampled totals:", real_total == int(sampled_total/sampling), ",", real_total, "==",  int(sampled_total/sampling))
+  print("real vs sampled total:", real_total == sampled_total, ",", real_total, "==",  sampled_total)
 
   return (sampled, verified) 
 
@@ -92,17 +98,16 @@ def plot_diff(sampled, verified, p):
   ax.set_xlabel("Size (Cachelines)")
   ax.set_ylabel("Missrate Error %")
 
-  cut = 32
-  
   ax.set_title(p+ ": Sampled vs Actual missrate errors (Trimmed first " + str(cut) + ")")
 
   for k, v in sampled.items(): 
     ax.plot(sampled[k].index[cut:], 100 * (sampled[k]["MissRate"][cut:] - verified[k]["MissRate"][cut:])/ verified[k]["MissRate"][cut:], color="red", label="Missrate 0 Error", linestyle='--')
-    for i in range(1, sampling):  
-      ax.plot(sampled[k].index[cut:], 100 * (sampled[k]["MissRate" + str(i)][cut:] - verified[k]["MissRate"][cut:])/ verified[k]["MissRate"][cut:], color="red", label="Missrate " + str(i) + " Error", linestyle='--')
+    if (not one_sample):
+      for i in range(1, sampling):  
+        ax.plot(sampled[k].index[cut:], 100 * (sampled[k]["MissRate" + str(i)][cut:] - verified[k]["MissRate"][cut:])/ verified[k]["MissRate"][cut:], color="red", label="Missrate " + str(i) + " Error", linestyle='--')
 
   # Stop the legend from covering up data
-  if (sampling < 10):
+  if (one_sample or sampling < 10):
     ax.legend(bbox_to_anchor=(1.02, .5), loc="center left")
   # Workaround for cut off artists
   plt.tight_layout()
@@ -114,25 +119,33 @@ def plot(sampled, verified, p):
   fig, ax = plt.subplots()
   ax.set_xlabel("Size (Cachelines)")
   ax.set_ylabel("Missrate")
-  cut = 32
   
-  ax.set_title(p + ": Sampled vs Actual missrate (Trimmed first " + str(cut) + ")")
+  if (verified):
+    ax.set_title(p + ": Sampled vs Actual missrate (Trimmed first " + str(cut) + ")")
+  else:
+    ax.set_title(p + ": Sampled missrate (Trimmed first " + str(cut) + ")")
 
+  linestyle = None
   for k, v in sampled.items(): 
 
-    print(v)
+    print(sampled[k])
+    if (verified):
+      print(verified[k])
+      linestyle="--"
   
-    #First plot: Hitrate
-    ax.plot(verified[k].index[cut:], verified[k]["MissRate"][cut:], color="blue", label="Missrate (Actual)")
-
-    #Second plot: Measured Time
-    ax.plot(sampled[k].index[cut:], sampled[k]["MissRate"][cut:], color="red", label="Missrate 0 (Sampled)", linestyle='--')
+    #Second plot: Missrate
+    ax.plot(sampled[k].index[cut:], sampled[k]["MissRate"][cut:], color="red", label="Missrate 0 (Sampled)", linestyle=linestyle)
     # Remaining plots: Extra missrates
-    for i in range(1, sampling):
-      ax.plot(sampled[k].index[cut:], sampled[k]["MissRate" + str(i)][cut:], color="red", label="Missrate " + str(i) + " (Sampled)", linestyle='--')
+    
+    if (not one_sample):
+      for i in range(1, sampling):
+        ax.plot(sampled[k].index[cut:], sampled[k]["MissRate" + str(i)][cut:], color="red", label="Missrate " + str(i) + " (Sampled)", linestyle='--')
+    if (verified):
+    #First plot: Hitrate
+      ax.plot(verified[k].index[cut:], verified[k]["MissRate"][cut:], color="blue", label="Missrate (Actual)")
 
   # Stop the legend from covering up data
-  if (sampling < 10):
+  if (one_sample or sampling < 10):
     ax.legend(bbox_to_anchor=(1.02, .5), loc="center left")
   # Workaround for cut off artists
   plt.tight_layout()
@@ -141,15 +154,27 @@ def plot(sampled, verified, p):
 
 
 
+subdir = "cilk5"
 programs = ["cholesky", "cilksort", "fft", "heat", "lu", "matmul", "nqueens", "qsort", "rectmul", "strassen"]
-programs = ["fft", "qsort", "rectmul", "strassen"]
-programs = ["cholesky", "cilksort", "heat", "lu", "matmul", "nqueens"]
-programs = ["cholesky", "cilksort", "heat"]
-for p in programs:
-  sampled, verified = parse_file("cilk5", "cilkiaf", p, "1")
+programs = ["cholesky", "cilksort", "fft", "heat", "lu", "matmul", "qsort", "rectmul", "strassen"]
+#programs = ["fft", "qsort", "rectmul", "strassen", "cilksort"]
+programs = ["fft", "rectmul", "strassen", "matmul", "heat", "cilksort"]
+#programs = ["qsort", "fft", "cholesky", "nqueens"]
+#programs = ["qsort", "fft", "cholesky"]
+#programs = ["heat"]
 
-  plot(sampled, verified, p)
-  plot_diff(sampled, verified, p)
+#Hijacking for testing
+#programs = ["boolean"]
+#subdir = "../examples" 
+
+for p in programs:
+  for w in workers:
+    sampled, verified = parse_file(subdir, "cilkiaf", p, w)
+
+    #plot(sampled, None, p)
+    
+    plot(sampled, verified, p)
+    plot_diff(sampled, verified, p)
 plt.show()
 
 #sampled[0].to_csv("sampled")

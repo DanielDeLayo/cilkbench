@@ -18,6 +18,7 @@ prefixes = ["simpleopt", "noopt", "locktest", "2_10_sampling", "verify"]
 
 
 workers = ["1", "24", "48"]
+workers = ["1"]
 runtime_pattern = re.compile("^\d+\.\d+$")
 
 

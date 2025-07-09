@@ -3,7 +3,7 @@ import re
 import matplotlib.pyplot as plt
 from random import random
 
-ntrials=2
+ntrials=1
 
 # The compilers and prefixes variables determine what is plotted
 # Prefixes are used for regression plots
@@ -155,7 +155,9 @@ def plot_new(prefix):
   plot(df, prefix)
   plot_rel_tapir(df, prefix)
 
-plot_new("verify")
+#plot_new("1 in 32768")
+#plot_new("1 in 1024")
+plot_new("1 in 32")
 #plt.show()
 
 #plot_all()

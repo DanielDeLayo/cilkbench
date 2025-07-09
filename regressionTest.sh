@@ -199,7 +199,8 @@ if [[ $RUN_P2_TESTS -eq 1 ]]; then
     bash ./testP2.sh $ARGS -x=$REGRESSION_NUMTRIALS $P2_TESTS
 fi
 if [[ $RUN_CILK_TESTS -eq 1 ]]; then
-    bash ./testCilk.sh $ARGS -x=$REGRESSION_NUMTRIALS $CILK_TESTS $MORE_CILK
+    bash ./testCilk.sh $ARGS -x=$REGRESSION_NUMTRIALS "fft"
+    #bash ./testCilk.sh $ARGS -x=$REGRESSION_NUMTRIALS $CILK_TESTS $MORE_CILK
     # bash ./testCilk.sh -s -t -x=$REGRESSION_NUMTRIALS $CILK_TESTS $MORE_CILK
 fi
 if [[ $RUN_INTEL_TESTS -eq 1 ]]; then

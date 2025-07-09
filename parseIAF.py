@@ -12,6 +12,7 @@ cut = 0
 cut = 100
 
 workers = ["1", "4", "16"]
+workers = ["1"]
 
 #Returns a list of the running time for the given compiler, worker, program tuple
 def parse_file(subdir, c, w, p):
@@ -93,6 +94,8 @@ def parse_frames(file_handle, num):
 
 
 def plot_diff(sampled, verified, p):
+  if (one_sample):
+    return
   #Force the same x axis
   fig, ax = plt.subplots()
   ax.set_xlabel("Size (Cachelines)")
@@ -102,9 +105,8 @@ def plot_diff(sampled, verified, p):
 
   for k, v in sampled.items(): 
     ax.plot(sampled[k].index[cut:], 100 * (sampled[k]["MissRate"][cut:] - verified[k]["MissRate"][cut:])/ verified[k]["MissRate"][cut:], color="red", label="Missrate 0 Error", linestyle='--')
-    if (not one_sample):
-      for i in range(1, sampling):  
-        ax.plot(sampled[k].index[cut:], 100 * (sampled[k]["MissRate" + str(i)][cut:] - verified[k]["MissRate"][cut:])/ verified[k]["MissRate"][cut:], color="red", label="Missrate " + str(i) + " Error", linestyle='--')
+    for i in range(1, sampling):  
+      ax.plot(sampled[k].index[cut:], 100 * (sampled[k]["MissRate" + str(i)][cut:] - verified[k]["MissRate"][cut:])/ verified[k]["MissRate"][cut:], color="red", label="Missrate " + str(i) + " Error", linestyle='--')
 
   # Stop the legend from covering up data
   if (one_sample or sampling < 10):
@@ -159,7 +161,7 @@ programs = ["cholesky", "cilksort", "fft", "heat", "lu", "matmul", "nqueens", "q
 programs = ["cholesky", "cilksort", "fft", "heat", "lu", "matmul", "qsort", "rectmul", "strassen"]
 #programs = ["fft", "qsort", "rectmul", "strassen", "cilksort"]
 programs = ["fft", "rectmul", "strassen", "matmul", "heat", "cilksort"]
-#programs = ["qsort", "fft", "cholesky", "nqueens"]
+programs = ["qsort", "fft", "cholesky", "nqueens"]
 #programs = ["qsort", "fft", "cholesky"]
 #programs = ["heat"]
 

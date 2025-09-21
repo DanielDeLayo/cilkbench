@@ -82,7 +82,7 @@ C_COMPILER() {
     case $1 in
 	"tapir") echo "$TAPIR_CC $TAPIR_CILK_FLAG";;
 	"cilksan") echo "$TAPIR_CC $TAPIR_CILK_FLAG -fsanitize=cilk";;
-	"cilkiaf") echo "$TAPIR_CC $TAPIR_CILK_FLAG -fcilktool=cilkiaf";;
+	"cilkiaf") echo "$TAPIR_CC $TAPIR_CILK_FLAG -fcilktool=cilkiaf -fopenmp -I/home/daniel/cilkiaf/build/projects/openmp/runtime/src";;
 	"cilkprace") echo "$TAPIR_CC $TAPIR_CILK_FLAG -fcilktool=cilkprace";;
 	"cilksanprace") echo "$TAPIR_CC $TAPIR_CILK_FLAG -fsanitize=cilkprace";;
 	"ref") echo "$REF_PATH/clang $REF_CILK_FLAG";;
@@ -99,7 +99,7 @@ CXX_COMPILER() {
     case $1 in
 	"tapir") echo "$TAPIR_CXX $TAPIR_CILK_FLAG";;
 	"cilksan") echo "$TAPIR_CXX $TAPIR_CILK_FLAG -fsanitize=cilk";;
-	"cilkiaf") echo "$TAPIR_CXX $TAPIR_CILK_FLAG -fcilktool=cilkiaf -lcrypto";;
+	"cilkiaf") echo "$TAPIR_CXX $TAPIR_CILK_FLAG -fcilktool=cilkiaf -fopenmp -I/home/daniel/cilkiaf/build/projects/openmp/runtime/src";;
 	"cilkprace") echo "$TAPIR_CXX $TAPIR_CILK_FLAG -fcilktool=cilkprace";;
 	"cilksanprace") echo "$TAPIR_CXX $TAPIR_CILK_FLAG -fsanitize=cilkprace";;
 	"ref") echo "$REF_PATH/clang++ $REF_CILK_FLAG";;
@@ -116,7 +116,7 @@ CILKFLAG() {
     case $1 in
 	"tapir") echo "$TAPIR_CILK_FLAG";;
 	"cilksan") echo "$TAPIR_CILK_FLAG -fsanitize=cilk $BITCODE_CSAN";;
-	"cilkiaf") echo "$TAPIR_CILK_FLAG -fcilktool=cilkiaf $BITCODE_IAF -lcrypto";;
+	"cilkiaf") echo "$TAPIR_CILK_FLAG -fcilktool=cilkiaf $BITCODE_IAF";;
 	"cilkprace") echo "$TAPIR_CILK_FLAG -fcilktool=cilkprace $BITCODE_PRACE";;
 	"cilksanprace") echo "$TAPIR_CILK_FLAG -fsanitize=cilkprace $BITCODE_PRACE";;
 	"ref") echo "$REF_CILK_FLAG";;

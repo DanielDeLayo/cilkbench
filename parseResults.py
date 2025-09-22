@@ -2,6 +2,7 @@ import pandas as pd
 import re
 import matplotlib.pyplot as plt
 from random import random
+import tarfile
 
 ntrials=1
 
@@ -18,7 +19,7 @@ prefixes = ["simpleopt", "noopt", "locktest", "2_10_sampling", "verify"]
 
 
 workers = ["1", "24", "48"]
-workers = ["1"]
+workers = ["1", "4", "16", "48"]
 runtime_pattern = re.compile("^\d+\.\d+$")
 
 
@@ -67,7 +68,6 @@ def read_csv(name):
   
   return df
 
-
 def configure_plot():
   plt.xlabel("Program")
   plt.ylabel("Runtime (s)")
@@ -77,6 +77,19 @@ def configure_plot():
   plt.legend(bbox_to_anchor=(1.02, .5), loc="center left")
   # Workaround for overlapping x labels
   plt.xticks(rotation=90)  
+  # Workaround for cut off x labels
+  plt.tight_layout()
+
+def configure_log_lines(w):
+  plt.title("Slowdown for " + w + "workers")
+  plt.xlabel("Program")
+  plt.ylabel("Slowdown vs Tapir")
+  plt.yscale("log")
+
+  # Stop the legend from covering up data
+  plt.legend(bbox_to_anchor=(1.02, .5), loc="center left")
+  # Workaround for overlapping x labels
+  #plt.xticks(rotation=90)  
   # Workaround for cut off x labels
   plt.tight_layout()
 
@@ -155,11 +168,33 @@ def plot_new(prefix):
   plot(df, prefix)
   plot_rel_tapir(df, prefix)
 
+def untar(what):
+  with tarfile.open(what, "r:gz") as tf:
+    tf.extractall()
+  
+def iaf_sweep(prefix):
+  dfs = []
+  for i in range(7, 15):
+    what = prefix + "_2_" + str(i)
+  
+    untar(what + ".tar.gz")
+    
+    df = cilk5_gather(what)
+    df.columns = [what]
+    dfs.append(df)
+  df = pd.concat(dfs, axis=1)
+  slowdown = df.loc["cilkiaf"]/df.loc["tapir"]
+  for w in workers:
+    slowdown.xs(w, level=1, drop_level=False).plot()
+    configure_log_lines(w)
+    
+
 #plot_new("1 in 32768")
 #plot_new("1 in 1024")
-plot_new("1 in 32")
+#plot_new("1 in 32")
 #plt.show()
 
 #plot_all()
-#plt.show()
+iaf_sweep("global")
+plt.show()
 

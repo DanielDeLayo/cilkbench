@@ -3,9 +3,11 @@ import re
 import matplotlib.pyplot as plt
 from random import random
 import os
+import tarfile
 
 ntrials=1
-sampling=64
+sampling_log = 3
+sampling=2 ** sampling_log
 one_sample = True
 one_sample = False
 
@@ -22,6 +24,10 @@ cut = 0
 workers = ["1", "4", "16"]
 workers = ["1"]
 
+def untar(what):
+  with tarfile.open(what, "r:gz") as tf:
+    tf.extractall()
+
 #Returns a list of the running time for the given compiler, worker, program tuple
 def parse_file(subdir, c, p, w):
   target = subdir + "/Run-" + "-".join([c,p,w]) + ".txt"
@@ -32,23 +38,6 @@ def parse_file(subdir, c, p, w):
 
   return results
 
-def cilk5_gather(prefix):
-  programs = ["cholesky", "cilksort", "fft", "heat", "lu", "matmul", "nqueens", "qsort", "rectmul", "strassen"]
-
-  # LAYOUT: Compilers, Programs, Workers
-  index = pd.MultiIndex.from_product([compilers, programs, workers],names=["Compiler", "Program", "Worker"])
-
-  data = []
-
-  for c in compilers:
-    for p in programs:
-      for w in workers:
-        data.append(parse_file("cilk5", c, p, w))
-
-  df = pd.DataFrame(data, index)
-  df.to_csv(prefix + ".csv")
-
-  return df
 
 def grab_df(file_handle):
   # Record start
@@ -169,40 +158,71 @@ def plot(sampled, verified, p):
   #plt.show()
 
 
+  #plot(sampled, None, p)
 
-subdir = "cilk5"
-programs = ["cholesky", "cilksort", "fft", "heat", "lu", "matmul", "nqueens", "qsort", "rectmul", "strassen"]
-programs = ["cholesky", "cilksort", "fft", "heat", "lu", "matmul", "qsort", "rectmul", "strassen"]
-#programs = ["fft", "qsort", "rectmul", "strassen", "cilksort"]
-programs = ["fft", "rectmul", "strassen", "matmul", "heat", "cilksort"]
-programs = ["qsort", "fft", "cholesky", "nqueens"]
-#programs = ["qsort", "fft", "cholesky"]
-#programs = ["heat"]
+  #    plot(sampled, verified, p)
+  #    plot_diff(sampled, verified, p)
+  #plt.show()
 
-#Hijacking for testing
-#programs = ["boolean"]
-#subdir = "../examples" 
+def iaf_sweep(prefix, a, b):
+  programs = ["cholesky", "cilksort", "fft", "heat", "lu", "matmul", "nqueens", "qsort", "rectmul", "strassen"]
+  dfs = []
+  for i in range(a, b+1):
+    what = prefix + "_2_" + str(i)
   
-sampled, verified = parse_file("../examples", "cilkiaf", "doubling", "0")
-print("SAMPLED", len(sampled), sampled)
-print("VERIFIED", len(verified), verified)
-plot(sampled, verified, "doubling")
-plot_diff(sampled, verified, "doubling")
-plt.show()
+    untar(what + ".tar.gz")
+
+    for p in programs:
+      for w in workers:
+        sampled, verified = parse_file("cilk5", "cilkiaf", p, w)
+        print(sampled, verified)
+        plot(sampled, verified, p + ", " + w)
+    plt.show()
 
 
-#for p in programs:
-#  for w in workers:
-#    sampled, verified = parse_file(subdir, "cilkiaf", p, w)
+if __name__ == "__main__":
+  subdir = "cilk5"
+  programs = ["cholesky", "cilksort", "fft", "heat", "lu", "matmul", "nqueens", "qsort", "rectmul", "strassen"]
+  programs = ["cholesky", "cilksort", "fft", "heat", "lu", "matmul", "qsort", "rectmul", "strassen"]
+  #programs = ["fft", "qsort", "rectmul", "strassen", "cilksort"]
+  programs = ["fft", "rectmul", "strassen", "matmul", "heat", "cilksort"]
+  programs = ["qsort", "fft", "cholesky", "nqueens"]
+  #programs = ["qsort", "fft", "cholesky"]
+  #programs = ["heat"]
+  
+  #Hijacking for testing
+  #programs = ["boolean"]
+  #subdir = "../examples" 
+  
 
-    #plot(sampled, None, p)
+  #iaf_sweep("global", 7, 20)
+  #plt.show()
+
+  for sampling_log in range(3, 10):
+    sampling = 2 ** sampling_log
     
-#    plot(sampled, verified, p)
-#    plot_diff(sampled, verified, p)
-#plt.show()
+    sampled, verified = parse_file("../examples", "cilkiaf", "doubling", str(sampling_log))
+    print("SAMPLED", len(sampled), sampled)
+    print("VERIFIED", len(verified), verified)
+    plot(sampled, verified, "doubling")
+    plt.savefig("doubling_2_" +  str(sampling_log) + ".pdf", dpi=1000)
+    plot_diff(sampled, verified, "doubling")
+    plt.savefig("doubling_2_" +  str(sampling_log) + "_err.pdf", dpi=1000)
+  plt.show()
 
-#sampled[0].to_csv("sampled")
-#verified[0].to_csv("verified")
-#df2 = verified[16] / (sampled[16])
-#df2.to_csv("delme")
+
+  #for p in programs:
+  #  for w in workers:
+  #    sampled, verified = parse_file(subdir, "cilkiaf", p, w)
+
+  #plot(sampled, None, p)
+
+  #    plot(sampled, verified, p)
+  #    plot_diff(sampled, verified, p)
+  #plt.show()
+
+  #sampled[0].to_csv("sampled")
+  #verified[0].to_csv("verified")
+  #df2 = verified[16] / (sampled[16])
+  #df2.to_csv("delme")
 

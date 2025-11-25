@@ -20,6 +20,7 @@ prefixes = ["simpleopt", "noopt", "locktest", "2_10_sampling", "verify"]
 
 workers = ["1", "24", "48"]
 workers = ["1", "4", "16", "48"]
+workers = ["1"]
 runtime_pattern = re.compile("^\d+\.\d+$")
 
 
@@ -86,10 +87,11 @@ def configure_log_lines(w):
   plt.ylabel("Slowdown vs Tapir")
   plt.yscale("log")
 
+  # 
   # Stop the legend from covering up data
   plt.legend(bbox_to_anchor=(1.02, .5), loc="center left")
   # Workaround for overlapping x labels
-  #plt.xticks(rotation=90)  
+  plt.xticks(rotation=90)  
   # Workaround for cut off x labels
   plt.tight_layout()
 
@@ -172,9 +174,9 @@ def untar(what):
   with tarfile.open(what, "r:gz") as tf:
     tf.extractall()
   
-def iaf_sweep(prefix):
+def iaf_sweep(prefix, a, b):
   dfs = []
-  for i in range(7, 21):
+  for i in range(a, b+1):
     what = prefix + "_2_" + str(i)
   
     untar(what + ".tar.gz")
@@ -183,10 +185,21 @@ def iaf_sweep(prefix):
     df.columns = [what]
     dfs.append(df)
   df = pd.concat(dfs, axis=1)
-  slowdown = df.loc["cilkiaf"]/df.loc["tapir"]
+  print(df)
+  slowdown_tapir = df.loc["cilkiaf"]/df.loc["tapir"]
+  slowdown_largest = df.iloc[:,:].div(df.iloc[:, -1], axis=0)
+  print(slowdown_largest)
+  #for w in workers:
+  #  slowdown_tapir.xs(w, level=1, drop_level=False).plot()
+  #  configure_log_lines(w)
   for w in workers:
-    slowdown.xs(w, level=1, drop_level=False).plot()
+    ax = slowdown_largest.loc["cilkiaf"].plot()
     configure_log_lines(w)
+    plt.yscale("linear")
+    plt.ylabel("Slowdown vs Least Data")
+    #print(slowdown_largest.loc['cilkiaf'].index.tolist())
+    #ax.set_xticklabels(slowdown_largest.loc['cilkiaf'].index)
+  
     
 
 #plot_new("1 in 32768")
@@ -195,6 +208,14 @@ def iaf_sweep(prefix):
 #plt.show()
 
 #plot_all()
-iaf_sweep("global")
+iaf_sweep("global", 7, 20)
 plt.show()
+  
+
+#for sampling_log in range(3, 10):
+    #sampling = 2 ** sampling_log
+    
+    #df = parse_file("../examples", "cilkiaf", "doubling", str(sampling_log))
+    #print(df)
+    #plt.savefig("doubling_2_" +  str(sampling_log) + "_runtime.pdf", dpi=1000)
 

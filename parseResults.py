@@ -174,7 +174,7 @@ def untar(what):
   
 def iaf_sweep(prefix):
   dfs = []
-  for i in range(7, 15):
+  for i in range(7, 21):
     what = prefix + "_2_" + str(i)
   
     untar(what + ".tar.gz")

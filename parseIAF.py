@@ -5,22 +5,30 @@ from random import random
 import os
 
 ntrials=1
-sampling=1024
+sampling=64
 one_sample = True
+one_sample = False
+
+use_wrong_invariant = True
+use_wrong_invariant = False
+
+wrong_invariant_warning = ""
+if (use_wrong_invariant):
+  wrong_invariant_warning = " [Incorrect]"
 
 cut = 0
-cut = 100
+#cut = 100
 
 workers = ["1", "4", "16"]
 workers = ["1"]
 
 #Returns a list of the running time for the given compiler, worker, program tuple
-def parse_file(subdir, c, w, p):
-  target = subdir + "/Run-" + "-".join([c,w,p]) + ".txt"
+def parse_file(subdir, c, p, w):
+  target = subdir + "/Run-" + "-".join([c,p,w]) + ".txt"
   results = None
   
   with open(target, "r") as f:
-    results = parse_frames(f, int(p))
+    results = parse_frames(f, int(w))
 
   return results
 
@@ -53,7 +61,10 @@ def grab_df(file_handle):
   df = pd.read_table(file_handle, sep=',', names=["Size", "Hits"], skiprows=1, nrows=max_cache, index_col=0) 
   df.attrs['total'] = total
   df["Misses"] = total - df["Hits"]
-  df["MissRate"] = df["Misses"]/total_unsampled
+  if (use_wrong_invariant):
+    df["MissRate"] = df["Misses"]/total
+  else:
+    df["MissRate"] = df["Misses"]/total_unsampled
   # Return to start
   file_handle.seek(where)
   return df
@@ -101,12 +112,15 @@ def plot_diff(sampled, verified, p):
   ax.set_xlabel("Size (Cachelines)")
   ax.set_ylabel("Missrate Error %")
 
-  ax.set_title(p+ ": Sampled vs Actual missrate errors (Trimmed first " + str(cut) + ")")
+  ax.set_title(p+ ": Sampled vs Actual missrate errors (Trimmed first " + str(cut) + ")" + wrong_invariant_warning)
+
 
   for k, v in sampled.items(): 
-    ax.plot(sampled[k].index[cut:], 100 * (sampled[k]["MissRate"][cut:] - verified[k]["MissRate"][cut:])/ verified[k]["MissRate"][cut:], color="red", label="Missrate 0 Error", linestyle='--')
+    rightmost = min(len(sampled[k]), len(verified[k]))
+    print(rightmost)
+    ax.plot(sampled[k].index[cut:rightmost], 100 * (sampled[k]["MissRate"][cut:rightmost] - verified[k]["MissRate"][cut:rightmost])/ verified[k]["MissRate"][cut:rightmost], color="red", label="Missrate 0 Error", linestyle='--')
     for i in range(1, sampling):  
-      ax.plot(sampled[k].index[cut:], 100 * (sampled[k]["MissRate" + str(i)][cut:] - verified[k]["MissRate"][cut:])/ verified[k]["MissRate"][cut:], color="red", label="Missrate " + str(i) + " Error", linestyle='--')
+      ax.plot(sampled[k].index[cut:rightmost], 100 * (sampled[k]["MissRate" + str(i)][cut:rightmost] - verified[k]["MissRate"][cut:rightmost])/ verified[k]["MissRate"][cut:rightmost], color="red", label="Missrate " + str(i) + " Error", linestyle='--')
 
   # Stop the legend from covering up data
   if (one_sample or sampling < 10):
@@ -123,9 +137,9 @@ def plot(sampled, verified, p):
   ax.set_ylabel("Missrate")
   
   if (verified):
-    ax.set_title(p + ": Sampled vs Actual missrate (Trimmed first " + str(cut) + ")")
+    ax.set_title(p + ": Sampled vs Actual missrate (Trimmed first " + str(cut) + ")" + wrong_invariant_warning)
   else:
-    ax.set_title(p + ": Sampled missrate (Trimmed first " + str(cut) + ")")
+    ax.set_title(p + ": Sampled missrate (Trimmed first " + str(cut) + ")" + wrong_invariant_warning)
 
   linestyle = None
   for k, v in sampled.items(): 
@@ -168,16 +182,24 @@ programs = ["qsort", "fft", "cholesky", "nqueens"]
 #Hijacking for testing
 #programs = ["boolean"]
 #subdir = "../examples" 
+  
+sampled, verified = parse_file("../examples", "cilkiaf", "doubling", "0")
+print("SAMPLED", len(sampled), sampled)
+print("VERIFIED", len(verified), verified)
+plot(sampled, verified, "doubling")
+plot_diff(sampled, verified, "doubling")
+plt.show()
 
-for p in programs:
-  for w in workers:
-    sampled, verified = parse_file(subdir, "cilkiaf", p, w)
+
+#for p in programs:
+#  for w in workers:
+#    sampled, verified = parse_file(subdir, "cilkiaf", p, w)
 
     #plot(sampled, None, p)
     
-    plot(sampled, verified, p)
-    plot_diff(sampled, verified, p)
-plt.show()
+#    plot(sampled, verified, p)
+#    plot_diff(sampled, verified, p)
+#plt.show()
 
 #sampled[0].to_csv("sampled")
 #verified[0].to_csv("verified")

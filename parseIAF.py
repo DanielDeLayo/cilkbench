@@ -6,23 +6,33 @@ import os
 import tarfile
 
 ntrials=1
-sampling_log = 3
+sampling_log = 7
 sampling=2 ** sampling_log
 one_sample = True
 one_sample = False
 
-use_wrong_invariant = True
-use_wrong_invariant = False
 
-wrong_invariant_warning = ""
-if (use_wrong_invariant):
-  wrong_invariant_warning = " [Incorrect]"
+wrong_invariant_warning = "[Uninit]"
+use_wrong_invariant = None
+#use_wrong_invariant = False
+
 
 cut = 0
 #cut = 100
 
 workers = ["1", "4", "16"]
 workers = ["1"]
+
+
+def set_correctness(value):
+  global use_wrong_invariant, wrong_invariant_warning
+  use_wrong_invariant = value
+  if (use_wrong_invariant):
+    wrong_invariant_warning = " [Incorrect]"
+  else:
+    wrong_invariant_warning = ""
+  
+set_correctness(True)
 
 def untar(what):
   with tarfile.open(what, "r:gz") as tf:
@@ -93,15 +103,16 @@ def parse_frames(file_handle, num):
   return (sampled, verified) 
 
 
-def plot_diff(sampled, verified, p):
+def plot_diff(sampled, verified, p, ax):
   if (one_sample):
     return
   #Force the same x axis
-  fig, ax = plt.subplots()
+  #fig, ax = plt.subplots()
   ax.set_xlabel("Size (Cachelines)")
   ax.set_ylabel("Missrate Error %")
 
   ax.set_title(p+ ": Sampled vs Actual missrate errors (Trimmed first " + str(cut) + ")" + wrong_invariant_warning)
+  ax.set_title(p+ ": Sampled vs Actual missrate errors" + wrong_invariant_warning)
 
 
   for k, v in sampled.items(): 
@@ -112,21 +123,21 @@ def plot_diff(sampled, verified, p):
       ax.plot(sampled[k].index[cut:rightmost], 100 * (sampled[k]["MissRate" + str(i)][cut:rightmost] - verified[k]["MissRate"][cut:rightmost])/ verified[k]["MissRate"][cut:rightmost], color="red", label="Missrate " + str(i) + " Error", linestyle='--')
 
   # Stop the legend from covering up data
-  if (one_sample or sampling < 10):
+  if (False): #one_sample or sampling < 10):
     ax.legend(bbox_to_anchor=(1.02, .5), loc="center left")
   # Workaround for cut off artists
   plt.tight_layout()
   plt.savefig("verify_diff.pdf")
   #plt.show()
 
-def plot(sampled, verified, p):
+def plot(sampled, verified, p, ax):
   #Force the same x axis
-  fig, ax = plt.subplots()
   ax.set_xlabel("Size (Cachelines)")
   ax.set_ylabel("Missrate")
   
   if (verified):
     ax.set_title(p + ": Sampled vs Actual missrate (Trimmed first " + str(cut) + ")" + wrong_invariant_warning)
+    ax.set_title(p + ": Sampled vs Actual missrate" + wrong_invariant_warning)
   else:
     ax.set_title(p + ": Sampled missrate (Trimmed first " + str(cut) + ")" + wrong_invariant_warning)
 
@@ -150,7 +161,7 @@ def plot(sampled, verified, p):
       ax.plot(verified[k].index[cut:], verified[k]["MissRate"][cut:], color="blue", label="Missrate (Actual)")
 
   # Stop the legend from covering up data
-  if (one_sample or sampling < 10):
+  if (False): #one_sample or sampling < 10):
     ax.legend(bbox_to_anchor=(1.02, .5), loc="center left")
   # Workaround for cut off artists
   plt.tight_layout()
@@ -180,6 +191,36 @@ def iaf_sweep(prefix, a, b):
     plt.show()
 
 
+
+def wrong_right_compare(smallest, largest, what):
+  global sampling, sampling_log, use_wrong_invariant
+
+  count = largest - smallest + 1
+
+  fig, ax = plt.subplots(count, 2, layout="constrained")
+  for sampling_log in range(smallest, largest+1):
+    sampling = 2 ** sampling_log
+    
+    # Right Pass
+    set_correctness(True)
+    sampled, verified = parse_file("../examples", "cilkiaf", "doubling", str(sampling_log))
+    print("SAMPLED", len(sampled), sampled)
+    print("VERIFIED", len(verified), verified)
+    plot(sampled, verified, "doubling", ax[sampling_log-smallest, 0])
+    
+    # Wrong Pass
+    set_correctness(False)
+    sampled, verified = parse_file("../examples", "cilkiaf", "doubling", str(sampling_log))
+    print("SAMPLED", len(sampled), sampled)
+    print("VERIFIED", len(verified), verified)
+    plot(sampled, verified, "doubling", ax[sampling_log-smallest, 1])
+    #plt.savefig("doubling_2_" +  str(sampling_log) + ".pdf", dpi=1000)
+    #plot_diff(sampled, verified, "doubling", ax[sampling_log-smallest, 1])
+    #plt.savefig("doubling_2_" +  str(sampling_log) + "_err.pdf", dpi=1000)
+  fig.subplots_adjust(wspace=0.2, hspace=0.2)
+  
+  
+
 if __name__ == "__main__":
   subdir = "cilk5"
   programs = ["cholesky", "cilksort", "fft", "heat", "lu", "matmul", "nqueens", "qsort", "rectmul", "strassen"]
@@ -197,17 +238,8 @@ if __name__ == "__main__":
 
   #iaf_sweep("global", 7, 20)
   #plt.show()
-
-  for sampling_log in range(3, 10):
-    sampling = 2 ** sampling_log
-    
-    sampled, verified = parse_file("../examples", "cilkiaf", "doubling", str(sampling_log))
-    print("SAMPLED", len(sampled), sampled)
-    print("VERIFIED", len(verified), verified)
-    plot(sampled, verified, "doubling")
-    plt.savefig("doubling_2_" +  str(sampling_log) + ".pdf", dpi=1000)
-    plot_diff(sampled, verified, "doubling")
-    plt.savefig("doubling_2_" +  str(sampling_log) + "_err.pdf", dpi=1000)
+  
+  wrong_right_compare(2, 10, "doubling")
   plt.show()
 
 

@@ -1,7 +1,7 @@
 import pandas as pd
 import re
 import matplotlib.pyplot as plt
-from random import random
+import random
 import os
 import tarfile
 
@@ -28,9 +28,9 @@ def set_correctness(value):
   global use_wrong_invariant, wrong_invariant_warning
   use_wrong_invariant = value
   if (use_wrong_invariant):
-    wrong_invariant_warning = " [Incorrect]"
+    wrong_invariant_warning = " [Divided By Actual]"
   else:
-    wrong_invariant_warning = ""
+    wrong_invariant_warning = " [Divided By Expectation]"
   
 set_correctness(True)
 
@@ -137,7 +137,7 @@ def plot(sampled, verified, p, ax):
   
   if (verified):
     ax.set_title(p + ": Sampled vs Actual missrate (Trimmed first " + str(cut) + ")" + wrong_invariant_warning)
-    ax.set_title(p + ": Sampled vs Actual missrate" + wrong_invariant_warning)
+    ax.set_title(p + ", 1 in " + str(sampling) + ": Sampled vs Actual missrate" + wrong_invariant_warning)
   else:
     ax.set_title(p + ": Sampled missrate (Trimmed first " + str(cut) + ")" + wrong_invariant_warning)
 
@@ -147,15 +147,26 @@ def plot(sampled, verified, p, ax):
     print(sampled[k])
     if (verified):
       print(verified[k])
-      linestyle="--"
+      linestyle="-"
+      #linestyle=(random.randint(0, 19), (1, 19))
+
+    linewidth = 1.5
+    alpha = 1/(sampling**.3)
   
     #Second plot: Missrate
-    ax.plot(sampled[k].index[cut:], sampled[k]["MissRate"][cut:], color="red", label="Missrate 0 (Sampled)", linestyle=linestyle)
+    ax.plot(sampled[k].index[cut:], sampled[k]["MissRate"][cut:], color="red", label="Missrate 0 (Sampled)", linestyle=linestyle, linewidth=linewidth, alpha=alpha)
     # Remaining plots: Extra missrates
     
     if (not one_sample):
       for i in range(1, sampling):
-        ax.plot(sampled[k].index[cut:], sampled[k]["MissRate" + str(i)][cut:], color="red", label="Missrate " + str(i) + " (Sampled)", linestyle='--')
+        ax.plot(sampled[k].index[cut:], sampled[k]["MissRate" + str(i)][cut:], color="red", label="Missrate " + str(i) + " (Sampled)", linestyle=linestyle, linewidth=linewidth, alpha=alpha)
+      dfs_for_mean = []
+      for i in range(1, 3):
+        dfs_for_mean.append(sampled[k]["MissRate" + str(i)]) 
+      df = pd.concat(dfs_for_mean)
+      mean = df.groupby(level=0).mean()
+      print(mean)
+      ax.plot(sampled[k].index[cut:], mean[cut:], color="green", label="Missrate (Combined Sample)")
     if (verified):
     #First plot: Hitrate
       ax.plot(verified[k].index[cut:], verified[k]["MissRate"][cut:], color="blue", label="Missrate (Actual)")
@@ -165,7 +176,7 @@ def plot(sampled, verified, p, ax):
     ax.legend(bbox_to_anchor=(1.02, .5), loc="center left")
   # Workaround for cut off artists
   plt.tight_layout()
-  plt.savefig("verify.pdf")
+  #plt.savefig("verify.pdf")
   #plt.show()
 
 
@@ -188,8 +199,6 @@ def iaf_sweep(prefix, a, b):
         sampled, verified = parse_file("cilk5", "cilkiaf", p, w)
         print(sampled, verified)
         plot(sampled, verified, p + ", " + w)
-    plt.show()
-
 
 
 def wrong_right_compare(smallest, largest, what):
@@ -197,27 +206,28 @@ def wrong_right_compare(smallest, largest, what):
 
   count = largest - smallest + 1
 
-  fig, ax = plt.subplots(count, 2, layout="constrained")
+  fig, ax = plt.subplots(count, 2, layout="constrained", figsize=(16, 12))
   for sampling_log in range(smallest, largest+1):
     sampling = 2 ** sampling_log
     
     # Right Pass
     set_correctness(True)
-    sampled, verified = parse_file("../examples", "cilkiaf", "doubling", str(sampling_log))
+    sampled, verified = parse_file("../examples", "cilkiaf", what, str(sampling_log))
     print("SAMPLED", len(sampled), sampled)
     print("VERIFIED", len(verified), verified)
-    plot(sampled, verified, "doubling", ax[sampling_log-smallest, 0])
+    plot(sampled, verified, what, ax[sampling_log-smallest, 0])
     
     # Wrong Pass
     set_correctness(False)
-    sampled, verified = parse_file("../examples", "cilkiaf", "doubling", str(sampling_log))
+    sampled, verified = parse_file("../examples", "cilkiaf", what, str(sampling_log))
     print("SAMPLED", len(sampled), sampled)
     print("VERIFIED", len(verified), verified)
-    plot(sampled, verified, "doubling", ax[sampling_log-smallest, 1])
+    plot(sampled, verified, what, ax[sampling_log-smallest, 1])
     #plt.savefig("doubling_2_" +  str(sampling_log) + ".pdf", dpi=1000)
     #plot_diff(sampled, verified, "doubling", ax[sampling_log-smallest, 1])
     #plt.savefig("doubling_2_" +  str(sampling_log) + "_err.pdf", dpi=1000)
-  fig.subplots_adjust(wspace=0.2, hspace=0.2)
+  fig.subplots_adjust(wspace=0.2, hspace=0.4)
+  return fig
   
   
 
@@ -238,8 +248,14 @@ if __name__ == "__main__":
 
   #iaf_sweep("global", 7, 20)
   #plt.show()
-  
-  wrong_right_compare(2, 10, "doubling")
+ 
+  which = "doubling"
+  which = "heavyhitter"
+ 
+  wrong_right_compare(3, 6, which)
+  plt.savefig(which + "_3-6" + ".pdf", dpi=1000)
+  wrong_right_compare(7, 10, which)
+  plt.savefig(which + "_7-10" + ".pdf", dpi=1000)
   plt.show()
 
 

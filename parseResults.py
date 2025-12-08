@@ -174,31 +174,49 @@ def untar(what):
   with tarfile.open(what, "r:gz") as tf:
     tf.extractall()
   
-def iaf_sweep(prefix, a, b):
+def iaf_sweep(prefix, logs):
   dfs = []
-  for i in range(a, b+1):
+  for i in logs:
     what = prefix + "_2_" + str(i)
   
     untar(what + ".tar.gz")
     
     df = cilk5_gather(what)
-    df.columns = [what]
+    df.columns = [2**i]
+    #df = df.droplevel(level='Worker')
     dfs.append(df)
   df = pd.concat(dfs, axis=1)
   print(df)
   slowdown_tapir = df.loc["cilkiaf"]/df.loc["tapir"]
-  slowdown_largest = df.iloc[:,:].div(df.iloc[:, -1], axis=0)
+  #slowdown_largest = df.iloc[:,:].div(df.iloc[:, -1], axis=0)
+  #slowdown_largest = df.iloc[:,:].div(df.iloc[:, 0], axis=0)
+  slowdown_largest = 1/df.iloc[:,:].div(df.iloc[:, 0], axis=0)
   print(slowdown_largest)
-  #for w in workers:
-  #  slowdown_tapir.xs(w, level=1, drop_level=False).plot()
-  #  configure_log_lines(w)
+  
   for w in workers:
-    ax = slowdown_largest.loc["cilkiaf"].plot()
+    slowdown_tapir.xs(w, level=1, drop_level=True).T.plot(logy=True, figsize=(8,6))
+    #ax = slowdown_largest.loc["cilkiaf"].droplevel(level='Worker').T.plot(logy=True)#.plot(kind="bar",logy=True)
     configure_log_lines(w)
-    plt.yscale("linear")
-    plt.ylabel("Slowdown vs Least Data")
-    #print(slowdown_largest.loc['cilkiaf'].index.tolist())
-    #ax.set_xticklabels(slowdown_largest.loc['cilkiaf'].index)
+    plt.xscale("log", base=2)
+    plt.yscale("log", base=2)
+    plt.ylabel("Slowdown vs uninstrumented")
+    plt.xlabel("Sampling rate [1 in x]")
+    plt.title("Slowdown for various programs as we vary sampling rate.")
+    plt.axvline(x=2**4, color='r', linestyle='--', label='1 in 2^4', zorder=-1)
+    plt.tight_layout()
+    plt.savefig("sampling_overhead.pdf", dpi=1000)
+
+  for w in workers:
+    ax = slowdown_largest.loc["cilkiaf"].droplevel(level='Worker').T.plot(logy=True, figsize=(8,6))#.plot(kind="bar",logy=True)
+    configure_log_lines(w)
+    plt.xscale("log", base=2)
+    plt.yscale("log", base=2)
+    plt.ylabel("Speedup vs 1 in 1")
+    plt.xlabel("Sampling rate [1 in x]")
+    plt.title("Speedup for various programs as we vary sampling rate.")
+    plt.axvline(x=2**4, color='r', linestyle='--', label='1 in 2^4', zorder=-1)
+    plt.tight_layout()
+    plt.savefig("sampling_speedup.pdf", dpi=1000)
   
     
 
@@ -208,7 +226,7 @@ def iaf_sweep(prefix, a, b):
 #plt.show()
 
 #plot_all()
-iaf_sweep("global", 7, 20)
+iaf_sweep("sample_one", list(range(0,21)))
 plt.show()
   
 

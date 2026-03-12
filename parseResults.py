@@ -20,7 +20,7 @@ prefixes = ["simpleopt", "noopt", "locktest", "2_10_sampling", "verify"]
 
 workers = ["1", "24", "48"]
 workers = ["1", "4", "16", "48"]
-workers = ["1"]
+#workers = ["1"]
 runtime_pattern = re.compile("^\d+\.\d+$")
 
 
@@ -201,19 +201,19 @@ def iaf_sweep(prefix, logs):
     plt.yscale("log", base=2)
     plt.ylabel("Slowdown vs uninstrumented")
     plt.xlabel("Sampling rate [1 in x]")
-    plt.title("Slowdown for various programs as we vary sampling rate.")
+    plt.title("Slowdown for various programs as we vary sampling rate. w=" + str(w))
     plt.axvline(x=2**4, color='r', linestyle='--', label='1 in 2^4', zorder=-1)
     plt.tight_layout()
     plt.savefig("sampling_overhead.pdf", dpi=1000)
 
   for w in workers:
-    ax = slowdown_largest.loc["cilkiaf"].droplevel(level='Worker').T.plot(logy=True, figsize=(8,6))#.plot(kind="bar",logy=True)
+    slowdown_largest.loc["cilkiaf"].xs(w, level=1, drop_level=True).T.plot(logy=True, figsize=(8,6))#.plot(kind="bar",logy=True)
     configure_log_lines(w)
     plt.xscale("log", base=2)
     plt.yscale("log", base=2)
     plt.ylabel("Speedup vs 1 in 1")
     plt.xlabel("Sampling rate [1 in x]")
-    plt.title("Speedup for various programs as we vary sampling rate.")
+    plt.title("Speedup for various programs as we vary sampling rate. w=" + str(w))
     plt.axvline(x=2**4, color='r', linestyle='--', label='1 in 2^4', zorder=-1)
     plt.tight_layout()
     plt.savefig("sampling_speedup.pdf", dpi=1000)
@@ -226,7 +226,8 @@ def iaf_sweep(prefix, logs):
 #plt.show()
 
 #plot_all()
-iaf_sweep("sample_one", list(range(0,21)))
+#iaf_sweep("sample_one", list(range(0,21)))
+iaf_sweep("global", list(range(2,20)))
 plt.show()
   
 

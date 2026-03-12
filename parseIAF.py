@@ -250,12 +250,14 @@ if __name__ == "__main__":
   #plt.show()
  
   which = "doubling"
-  which = "heavyhitter"
- 
-  wrong_right_compare(3, 6, which)
-  plt.savefig(which + "_3-6" + ".pdf", dpi=1000)
-  wrong_right_compare(7, 10, which)
-  plt.savefig(which + "_7-10" + ".pdf", dpi=1000)
+  #which = "heavyhitter"
+
+  for which in ["doubling", "heavyhitter"]:
+    wrong_right_compare(3, 6, which)
+    plt.savefig(which + "_3-6" + ".pdf", dpi=1000)
+    wrong_right_compare(7, 10, which)
+    plt.savefig(which + "_7-10" + ".pdf", dpi=1000)
+
   plt.show()
 
 
